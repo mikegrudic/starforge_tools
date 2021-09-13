@@ -30,7 +30,7 @@ def CompressFile(f):
 #    N = int(f.split("Res")[1].split("_")[0])**3
     F = h5py.File(f,'r')
 #    stardir = "./stars"
-#    if not isdir(stardir): mkdir(stardir)
+    if not isdir(stardir): mkdir(stardir)
     f2name = stardir +"/" + f.split("/")[-1].replace('.hdf5', '_stars.hdf5')
     if isfile(f2name): return
 

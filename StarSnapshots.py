@@ -18,7 +18,7 @@ nproc = 16 #multiprocessing.cpu_count()
 stuff_to_skip = "DivergenceOfMagneticField", "DivBcleaningFunctionPhi", "DivBcleaningFunctionGradPhi", "StarFormationRate", "BH_Dist", "TurbulenceDissipation", "Vorticity", "TurbulenceDriving"
 types_to_skip = "PartType0", "PartType3"
 
-def CompressFile(f):
+def MakeStarSnap(f):
 #    print(f, getsize(f)/1e9)
 #    sleep(10)
 #    return
@@ -59,6 +59,6 @@ def CompressFile(f):
 if __name__ == "__main__":
     filenames = [f for f in argv[1:]]
     filenames = np.array(filenames)
-    Pool(nproc).map(CompressFile, (f for f in filenames))
+    Pool(nproc).map(MakeStarSnap, (f for f in filenames))
 
 

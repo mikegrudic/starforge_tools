@@ -14,6 +14,7 @@ Options:
    --alpha_crit=<f>           Critical virial parameter to be considered bound [default: 1.0]
    --ignore_B                 Ignore magnetic field
    --np=<N>                   Number of cores to run on [default: 1]
+   --ngrav=<N>                Number of cores per python process to parallelize gravity [default: 4]
 """
 
 #alpha_crit = 1000
@@ -37,8 +38,8 @@ from collections import OrderedDict
 from os import path, mkdir
 from joblib import Parallel, delayed
 from numba import set_num_threads
+
 max_num_crossings = 1
-set_num_threads(4)
 
 def SaveArrayDict(path, arrdict):
     """Takes a dictionary of numpy arrays with names as the keys and saves them in an ASCII file with a descriptive header"""
@@ -193,8 +194,8 @@ def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, 
     for i in range(len(x)):
         avir = 1e100
         ## do it one particle at a time, in decreasing order of density
-        if not i%10000:
-            print("Processed %d of %g particles; ~%3.2g%% done."%(i, len(x), 100*(float(i)/len(x))**2))
+#        if not i%10000:
+#            print("Processed %d of %g particles; ~%3.2g%% done."%(i, len(x), 100*(float(i)/len(x))**2))
         if np.any(ngb[i] > len(x) -1):
             groups[i] = [i,]
             group_tree[i] = None
@@ -317,7 +318,7 @@ def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, 
                 for d in groups, particles_since_last_tree, group_tree, group_energy, group_KE, COM, v_COM, masses, alpha_vir: # delete the data from the absorbed group
                     d.pop(group_index_b, None)
                 add_to_existing_group = True
-                if((avir_old-alpha_crit)*(avir-alpha_crit) < 0): print("crossing %g %g"%(avir_old, avir))
+#                if((avir_old-alpha_crit)*(avir-alpha_crit) < 0): print("crossing %g %g"%(avir_old, avir))
                 
             groups[group_index_a].append(i)
             max_group_size = max(max_group_size, len(groups[group_index_a]))
@@ -524,10 +525,10 @@ from multiprocessing import Pool
 from natsort import natsorted
 def main():
     options = docopt(__doc__)
-    for f in options["<files>"]:
-        print(f)
-        ComputeClouds(f, options)
-
-#    Parallel(n_jobs=1)(delayed(ComputeClouds)(f, options) for f in natsorted(options["<files>"]))
+#    for f in options["<files>"]:
+#        print(f)
+#        ComputeClouds(f, options)
+    set_num_threads(int(options["--ngrav"]))
+    Parallel(n_jobs=int(options["--np"]))(delayed(ComputeClouds)(f, options) for f in natsorted(options["<files>"]))
 
 if __name__ == "__main__": main()

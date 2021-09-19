@@ -444,7 +444,8 @@ def ComputeClouds(filename, options):
 
     bound_data = OrderedDict()
     bound_data["Mass"] = []
-    bound_data["Center"] = []
+    bound_data["CenterOfMass"] = []
+    bound_data["DensityPeak"] = []
     bound_data["PrincipalAxes"] = []
     bound_data["Reff"] = []
     bound_data["HalfMassRadius"] = []
@@ -452,6 +453,7 @@ def ComputeClouds(filename, options):
 #    bound_data["SigmaEff"] = []
     bound_data["Vdisp"] = []
     bound_data["Alpha"] = []
+
 #    bound_data["SFE"] = []
 #    bound_data["epsff"] = []
     
@@ -464,8 +466,9 @@ def ComputeClouds(filename, options):
         if len(c) < 32: continue
         bound_data["Mass"].append(m[c].sum())
         bound_data["NumParticles"].append(len(c))
-        bound_data["Center"].append(np.average(x[c], weights=m[c], axis=0))
-        dx = x[c] - bound_data["Center"][-1]
+        bound_data["CenterOfMass"].append(np.average(x[c], weights=m[c], axis=0))
+        bound_data["DensityPeak"].append(x[c][rho[c].argmax()])
+        dx = x[c] - bound_data["CenterOfMass"][-1]
         eig = np.linalg.eig(np.cov(dx.T))[0]
         bound_data["PrincipalAxes"].append(np.sqrt(eig))
         bound_data["Reff"].append(np.prod(np.sqrt(eig))**(1./3))
@@ -529,6 +532,9 @@ def main():
 #        print(f)
 #        ComputeClouds(f, options)
     set_num_threads(int(options["--ngrav"]))
-    Parallel(n_jobs=int(options["--np"]))(delayed(ComputeClouds)(f, options) for f in natsorted(options["<files>"]))
+    if options["--np"] == 1:
+        [ComputeClouds(f, options) for f in options["<files>"]]
+    else:
+        Parallel(n_jobs=int(options["--np"]))(delayed(ComputeClouds)(f, options) for f in natsorted(options["<files>"]))
 
 if __name__ == "__main__": main()

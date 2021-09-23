@@ -61,11 +61,11 @@ def ComputePowerSpectra(f, options):#for f in argv[1:]:
             if float(boxsize) < 0: boxsize = F["Header"].attrs["BoxSize"]
         else:
             boxsize = 0.2 * F["Header"].attrs["BoxSize"]
+
         print(boxsize)
-        powerspec_boxsize = boxsize # size of volume in which to do grid deposition
-        center = np.repeat(0.5*boxsize,3)
+        center = np.repeat(0.5*F["Header"].attrs["BoxSize"],3)
         
-        cut = (n > 1)
+        cut = (n > 0)
         rho = rho[cut]
         x = np.array(F["PartType0"]["Coordinates"])[cut]
         m = np.array(F["PartType0"]["Masses"])[cut]
@@ -74,10 +74,9 @@ def ComputePowerSpectra(f, options):#for f in argv[1:]:
         B = np.array(F["PartType0"]["MagneticField"])[cut]*1e4
         
         M = Meshoid(x,m,h)    
-
-        rhogrid = M.DepositToGrid(m,size=powerspec_boxsize,res=powerspec_gridres,center=center)
-        vgrid = np.array([M.InterpToGrid(v[:,i],size=powerspec_boxsize,res=powerspec_gridres,center=center) for i in range(3)])
-        Bgrid = np.array([M.InterpToGrid(B[:,i],size=powerspec_boxsize,res=powerspec_gridres,center=center) for i in range(3)])
+        rhogrid = M.DepositToGrid(m,size=boxsize,res=powerspec_gridres,center=center)
+        vgrid = np.array([M.InterpToGrid(v[:,i],size=boxsize,res=powerspec_gridres,center=center) for i in range(3)])
+        Bgrid = np.array([M.InterpToGrid(B[:,i],size=boxsize,res=powerspec_gridres,center=center) for i in range(3)])
 
         powerspectra = []
         for grid in vgrid, Bgrid, rhogrid:

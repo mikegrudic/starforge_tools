@@ -32,7 +32,6 @@ import numpy as np
 import pytreegrav
 from pytreegrav import Potential, Octree, PotentialWalk, Potential_bruteforce
 from sys import argv
-import Meshoid
 from docopt import docopt
 from collections import OrderedDict
 from os import path, mkdir
@@ -119,8 +118,7 @@ def VirialParameter(c, x, m, h, v, u):
 ######## Energy increment functions ########
 #@profile
 def EnergyIncrement(
-    i,
-    c, m, M,
+    i, m, M,
     x, v, u, h,
     v_com,
     tree=None,
@@ -165,7 +163,7 @@ def PE_Increment(
     return m[i]*phi
 
 ######## Grouping functions ########
-#@profile
+@profile
 def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, rmax=1e100):
     ngbdist, ngb = cKDTree(x).query(x,min(cluster_ngb, len(x)), distance_upper_bound=min(rmax, h.max()))
 
@@ -330,9 +328,7 @@ def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, 
             mgroup = masses[g]
             if num_crossings[g] <= max_num_crossings:
                 group_KE[g] += KE_Increment(i, m, v, u, v_COM[g], mgroup)
-                group_energy[g] += EnergyIncrement(i, groups[g][:-1], m, mgroup, x, v, u, h, v_COM[g], group_tree[g], particles_since_last_tree[g]) 
-#            else:
-#                group_energy[g] += KE_Increment(i, m, v, u, v_COM[g], mgroup) #EnergyIncrement(i, groups[g][:-1], m, mgroup, x, v, u, h, v_COM[g], group_tree[g], particles_since_last_tree[g])
+                group_energy[g] += EnergyIncrement(i, m, mgroup, x, v, u, h, v_COM[g], group_tree[g], particles_since_last_tree[g]) 
             avir_old = alpha_vir[g]            
             if num_crossings[g] <= max_num_crossings: avir = abs(2*group_KE[g]/np.abs(group_energy[g] - group_KE[g]))
             else: avir = 1e100

@@ -61,7 +61,7 @@ def ComputePowerSpectra(f, options):#for f in argv[1:]:
         powerspec_boxsize = boxsize# / 5 # size of volume in which to do grid deposition
         center = np.repeat(0.5*boxsize,3)
         
-        cut = (n > 0)
+        cut = (n > 1)
         rho = rho[cut]
         x = np.array(F["PartType0"]["Coordinates"])[cut]
         m = np.array(F["PartType0"]["Masses"])[cut]

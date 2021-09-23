@@ -49,7 +49,7 @@ def GetPowerSpectrum(grid, res):
 
 def ComputePowerSpectra(f, options):#for f in argv[1:]:
     powerspec_gridres = int(options["--res"])
-    boxsize = float(options["--boxsize"])
+    boxsize = options["--boxsize"]
     with h5py.File(f,"r") as F:
         powerspecpath = abspath(f).split("snapshot_")[0] + "/power_spectrum"
         snapnum = f.split("snapshot_")[1].split(".hdf5")[0]
@@ -57,8 +57,12 @@ def ComputePowerSpectra(f, options):#for f in argv[1:]:
         
         rho = np.array(F["PartType0"]["Density"])
         n = rho*29.9
-        if boxsize < 0: boxsize = F["Header"].attrs["BoxSize"]
-        powerspec_boxsize = boxsize# / 5 # size of volume in which to do grid deposition
+        if boxsize is not None:
+            if float(boxsize) < 0: boxsize = F["Header"].attrs["BoxSize"]
+        else:
+            boxsize = 0.2 * F["Header"].attrs["BoxSize"]
+        print(boxsize)
+        powerspec_boxsize = boxsize # size of volume in which to do grid deposition
         center = np.repeat(0.5*boxsize,3)
         
         cut = (n > 1)

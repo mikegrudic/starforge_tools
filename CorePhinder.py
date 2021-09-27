@@ -18,7 +18,7 @@ Options:
 """
 
 #alpha_crit = 1000
-ntree = 1000
+ntree = 10000
 pytreegrav_parallel = True
 
 import h5py
@@ -163,7 +163,7 @@ def PE_Increment(
     return m[i]*phi
 
 ######## Grouping functions ########
-@profile
+#@profile
 def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, rmax=1e100):
     ngbdist, ngb = cKDTree(x).query(x,min(cluster_ngb, len(x)), distance_upper_bound=min(rmax, h.max()))
 
@@ -343,7 +343,11 @@ def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, 
             masses[g] += m[i]            
             particles_since_last_tree[g] = np.vstack((particles_since_last_tree[g],np.array([x[i,0], x[i,1],x[i,2],m[i],h[i]])))
             if len(particles_since_last_tree[g]) > ntree and num_crossings[g] <= max_num_crossings:
-                group_tree[g] = pytreegrav.ConstructTree(np.take(x,groups[g],axis=0), np.take(m,groups[g]), np.take(h,groups[g]))
+                gg = groups[g]
+                xtree = np.take(x,groups[g],axis=0)
+                mtree = np.take(m,groups[g])
+                htree = np.take(h,groups[g])
+                group_tree[g] = pytreegrav.ConstructTree(xtree, mtree, htree)
                 particles_since_last_tree[g] = np.zeros((0,5))
             max_group_size = max(max_group_size, len(groups[g]))
 #            if((avir_old-alpha_crit)*(avir-alpha_crit) < 0): print("crossing %g %g"%(avir_old, avir))

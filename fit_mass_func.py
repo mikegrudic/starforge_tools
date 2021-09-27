@@ -25,16 +25,16 @@ def FitMassFunction(masses,mmin=None,mmax=None,func=massfunc_kroupa, walkers=100
     if mmin is None: mmin = masses.min()
         
     masses = masses[(masses>=mmin)*(masses <= mmax)]
-    mgrid = 10**np.linspace(np.log10(mmin),np.log10(mmax),1000)
+    mgrid = 10**np.linspace(np.log10(mmin),np.log10(mmax),1000) # set up a grid to perform the numerical quadrature of the mass function for normalization
     
     @njit(fastmath=True)
     def log_prob(x, mstar):
-        log_m12, log_m23, alpha1, alpha2, alpha3 = x
+        log_m12, log_m23, alpha1, alpha2, alpha3 = x # unpack the parameters
         if log_m12 > log_m23: return -np.inf # enforce m12 < m23
-        massfunc_norm = np.trapz(func(mgrid, log_m12, log_m23, alpha1, alpha2, alpha3), mgrid)
-        massfunc_vals = func(mstar, log_m12, log_m23,alpha1, alpha2, alpha3)/massfunc_norm
-        if np.any(np.isnan(np.log(massfunc_vals))) or np.any(np.isinf(np.log(massfunc_vals))): return -np.inf
-        return np.sum(np.log(massfunc_vals))
+        massfunc_norm = np.trapz(func(mgrid, log_m12, log_m23, alpha1, alpha2, alpha3), mgrid) # compute the integral of the un-normalized mass function
+        massfunc_vals = func(mstar, log_m12, log_m23,alpha1, alpha2, alpha3)/massfunc_norm # normalize the mass function sampled at the data points
+        if np.any(np.isnan(np.log(massfunc_vals))) or np.any(np.isinf(np.log(massfunc_vals))): return -np.inf # 0 likelihood for erroneous values
+        return np.sum(np.log(massfunc_vals)) # return total log-likelihood of IMF values evaluated at the data points
         
     ndim, nwalkers = 5, walkers
     p0 = np.array([0,0,0,-1,-2])

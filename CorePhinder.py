@@ -477,7 +477,7 @@ def ComputeClouds(filename, options):
         dv = v[c] - np.average(v[c], weights=m[c], axis=0)
         bound_data["Vdisp"].append(np.mean((dv*dv).sum(1))**0.5)
         bound_data["Alpha"].append(VirialParameter(c, x, m, h, v, u))
-        cluster_id = "Cloud"+ ("%d"%i).zfill(int(np.log10(len(bound_groups))+1))
+        cluster_id = "Core"+ ("%d"%i).zfill(4)
         i += 1
         N = len(c)
 

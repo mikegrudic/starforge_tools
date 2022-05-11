@@ -26,4 +26,4 @@ for run in argv[1:]: # give the output folders of the runs you want to look at
     except:
         raise("problem getting IMF for " + run)
 
-    np.savetxt("IMF.dat", np.array([[i, zams_mass_dict[i]] for i in zams_mass_dict.keys()]))
+    np.savetxt(run+"/IMF.dat", np.array([[i, zams_mass_dict[i]] for i in zams_mass_dict.keys()]))

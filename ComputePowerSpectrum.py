@@ -49,7 +49,10 @@ def GetPowerSpectrum(grid, res):
 
 def ComputePowerSpectra(f, options):#for f in argv[1:]:
     powerspec_gridres = int(options["--res"])
-    boxsize = options["--boxsize"]
+    try:
+        boxsize = float(options["--boxsize"])
+    except:
+        boxsize = None
     with h5py.File(f,"r") as F:
         powerspecpath = abspath(f).split("snapshot_")[0] + "/power_spectrum"
         snapnum = f.split("snapshot_")[1].split(".hdf5")[0]
@@ -90,4 +93,4 @@ from multiprocessing import Pool
 #[ComputePowerSpectra(f,options) for f in snapshot_paths]
 def func(x):
     return ComputePowerSpectra(x,options)
-Pool(14).map(func,snapshot_paths)
+Pool(1).map(func,snapshot_paths)

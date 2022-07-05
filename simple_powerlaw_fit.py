@@ -1,3 +1,5 @@
+import numpy as np
+
 def simple_powerlaw_fit(data, xmin=None, xmax=None, Ngrid=1024,alpha_min=-4,alpha_max=4,quantiles=[.16,.5,.84]):
     """Computes the specified quantiles of the posterior distribution of the power law slope alpha, given a dataset and desired quantiles
     

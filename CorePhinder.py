@@ -13,6 +13,7 @@ Options:
    --nmin=<n>                 Minimum particle number density to cut at, in cm^-3 [default: 10]
    --alpha_crit=<f>           Critical virial parameter to be considered bound [default: 1.0]
    --ignore_B                 Ignore magnetic field
+   --ignore_thermal           Ignore thermal pressure
    --np=<N>                   Number of cores to run on [default: 1]
    --ngrav=<N>                Number of cores per python process to parallelize gravity [default: 4]
 """
@@ -375,12 +376,13 @@ def ComputeClouds(filename, options):
     nmin = float(options["--nmin"])
     recompute_potential = options["--recompute_potential"]
     ignore_B = options["--ignore_B"]
+    ignore_thermal = options["--ignore_thermal"]
     ptype = "PartType0"
     
     outdir = filename.split("snapshot")[0] + "cores"
     if not path.isdir(outdir): mkdir(outdir)
     n = filename.split(".hdf5")[0].split("_")[-1]
-    fname = outdir + "/Cores_%s_n%g_a%g_B%d.hdf5"%(n,nmin,alpha_crit, not ignore_B)
+    fname = outdir + "/Cores_%s_n%g_a%g_B%d_u%d.hdf5"%(n,nmin,alpha_crit, not ignore_B, not ignore_thermal)
     if path.isfile(fname): return
 
     if boxsize != "None":
@@ -408,8 +410,12 @@ def ComputeClouds(filename, options):
     x = np.array(F[ptype]["Coordinates"])
     ids = np.array(F[ptype]["ParticleIDs"])
     u = np.array(F[ptype]["InternalEnergy"])
+    if ignore_thermal: u *= 0
     rho = np.array(F[ptype]["Density"])
-    B = np.array(F[ptype]["MagneticField"])
+    if "MagneticField" in F[ptype].keys():
+        B = np.array(F[ptype]["MagneticField"])
+    else:
+        B = np.zeros_like(x)
  
     criteria *= (rho*29.9 > nmin) # only look at dense gas (>nmin cm^-3) 145.7
 
@@ -520,7 +526,7 @@ def ComputeClouds(filename, options):
     F.close()
     
     #now save the ascii data files
-    SaveArrayDict(outdir+"/Cores_%s_n%g_a%g_B%d.dat"%(n,nmin,alpha_crit, not ignore_B), bound_data)
+    SaveArrayDict(outdir+"/Cores_%s_n%g_a%g_B%d_u%d.dat"%(n,nmin,alpha_crit, not ignore_B, not ignore_thermal), bound_data)
 #    SaveArrayDict(filename.split("snapshot")[0] + "unbound_%s.dat"%n, unbound_data)
 
 from multiprocessing import Pool

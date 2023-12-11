@@ -28,12 +28,14 @@ M = float(options["--M"])
 
 
 def luminosity_tout(ms):
+    """Fit of main-sequence luminosity as a function of main-sequence mass from Tout 1996MNRAS.281..257T, in solar units"""
     L_ms = ((0.39704170*np.power(ms,5.5) + 8.52762600*np.power(ms,11)) / (0.00025546+np.power(ms,3)+5.43288900*np.power(ms,5) + 5.56357900*np.power(ms,7) + 0.78866060*np.power(ms,8)+0.00586685*np.power(ms,9.5)))
     L_ms = np.atleast_1d(L_ms)
     L_ms[np.isnan(L_ms)] = 0.
     return L_ms
 
 def radius_tout(ms):
+    """Fit of main-sequence radius as a function of main-sequence mass from Tout 1996MNRAS.281..257T, in solar units"""
     R_ms = (1.71535900*np.power(ms,2.5)+6.59778800*np.power(ms,6.5)+10.08855000*np.power(ms,11)+ 1.01249500*np.power(ms,19)+0.07490166*np.power(ms,19.5)) /(0.01077422+3.08223400*np.power(ms,2)+17.84778000*np.power(ms,8.5) +np.power(ms,18.5)+0.00022582*np.power(ms,19.5));
     R_ms = np.atleast_1d(R_ms)
     R_ms[np.isnan(R_ms)] = 0.

@@ -45,13 +45,13 @@ def effective_temperature(mass=None, lum=None, radius=None):
     return 5780 * (lum / radius**2) ** 0.25
 
 
-def wind_mdot_MS(mass=None, lum=None, Z=1.0):
+def wind_mdot_MS(mass=None, lum=None, Z_solar=1.0):
     """Returns the main-sequence wind mass loss rate in solar mass per year, following 2022MNRAS.512..216G"""
     if lum is None:
         lum = luminosity_MS(mass)
     mdot_hi = 10**-22.2 * lum**2.9  # weak wind
     mdot_lower = 10**-15.0 * lum**1.5  # O stars
-    return np.min([mdot_hi, mdot_lower], axis=0)
+    return np.min([mdot_hi, mdot_lower], axis=0) * Z_solar**0.7
 
 
 def Q_ionizing(mass, energy_eV=13.6):

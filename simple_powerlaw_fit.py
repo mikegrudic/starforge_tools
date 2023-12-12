@@ -12,10 +12,10 @@ def simple_powerlaw_fit(
 ):
     """Computes the specified quantiles of the posterior distribution of the power law slope alpha, given a dataset and desired quantiles
 
-    Example usage to get intervals on the power-law slope of the IMF over the interval [1,10]:
+    Example usage to get quantiles on the power-law slope of the IMF over the interval [1,10]:
     `
     masses = np.loadtxt("my_IMF_data.dat")
-    quantiles = simple_powerlaw_fit(masses, mmin=1, mmax=10)
+    quantiles = simple_powerlaw_fit(masses, xmin=1, xmax=10)
     `
     """
     if xmin is None:

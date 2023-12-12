@@ -1,6 +1,5 @@
 """Approximations for useful special mathematical functions"""
-from numba import njit, vectorize, float32, float64, cfunc
-from numba.typed import List
+from numba import njit, vectorize, float32, float64
 import numpy as np
 from scipy.special import roots_legendre
 
@@ -35,9 +34,9 @@ def logpoisson(counts, expected_counts):
 
 
 @njit(fastmath=True, error_model="numpy")
-def planck_upper_series(x):
-    """Series solution for upper Planck integral from x to infinity evaluated to machine
-    precision. Most efficient for large x.
+def planck3_upper_series(x):
+    """Series solution for upper Planck integral norm * x^3/(exp(x)-1) from x to
+    infinity evaluated to machine precision. Most efficient for large x.
     """
     tol = 2.220446049250313e-16
     series_sum = 0
@@ -56,9 +55,30 @@ def planck_upper_series(x):
 
 
 @njit(fastmath=True, error_model="numpy")
-def planck_lower_series(x):
+def planck2_upper_series(x):
+    """Series solution for integral of (1/norm) x^2/(exp(x)-1) x to infinity
+    evaluated to machine precision. Most efficient for large x.
+    """
+    tol = 2.220446049250313e-16
+    series_sum = 0
+    err = 1e100
+    expx_inv = np.exp(-x)
+    expx_inv_power = expx_inv  # will cumulatively multiply at each iteration
+    n = 1
+    while np.abs(err) > tol * series_sum:
+        nx = n * x
+        err = (2 + nx * (2 + nx)) * expx_inv_power / (n * n * n)
+        expx_inv_power *= expx_inv
+        series_sum += err
+        n += 1
+
+    return series_sum * 0.15398973382026503
+
+
+@njit(fastmath=True, error_model="numpy")
+def planck3_lower_series(x):
     """Series solution for Planck function integral from 0 to x,
-    most efficient for large x, valid to machine precision on [0,3]
+    most efficient for small x, valid to machine precision on [0,3]
     """
     coeffs = np.array(
         [
@@ -106,12 +126,62 @@ def planck_lower_series(x):
     return val * 0.15398973382026503
 
 
+@njit(fastmath=True, error_model="numpy")
+def planck2_lower_series(x):
+    """Series solution for integral norm * x^2/(exp(x)-1) from 0 to x,
+    most efficient for large x, valid to machine precision on [0,3]
+
+    Normalization is 1/integral(x^3 exp(x) - 1) = 15/pi^4, such that
+    this can be used to compute average photon energies or photon
+    numbers
+    """
+    coeffs = np.array(
+        [
+            0.5,
+            -0.166666666666667,
+            0.0208333333333333,
+            -0.000231481481481481,
+            4.13359788359788e-6,
+            -8.26719576719577e-8,
+            1.73972974898901e-9,
+            -3.77442152763392e-11,
+            8.36408533167792e-13,
+            -1.88315572017921e-14,
+            4.29303102813892e-16,
+            -9.88576681162755e-18,
+            2.2954178451501e-19,
+            -5.36710180223559e-21,
+            1.26239537129624e-22,
+            -2.98450580901252e-24,
+            7.08735141355526e-26,
+            -1.68964431437418e-27,
+            4.04214576559685e-29,
+            -9.69998668596134e-31,
+            2.33418356427376e-32,
+        ]
+    )
+
+    x_sqr = x * x
+    val = coeffs[-1] * x_sqr
+
+    n = len(coeffs) - 1
+    while n >= 3:
+        val = x_sqr * (val + coeffs[n])
+        n -= 1
+    while n >= 0:
+        val = x * (val + coeffs[n])
+        n -= 1
+    val *= x
+
+    return val * 0.15398973382026503
+
+
 @vectorize(
     [float32(float32, float32), float64(float64, float64)],
     target="parallel",
     fastmath=True,
 )
-def planck_integral(x1, x2):
+def planck3_integral(x1, x2):
     """Returns the definite integral of the normalized (frequency)
     Planck function norm * x^3/(exp(x)-1) from x1 to x2, accurate to machine
     precision
@@ -132,26 +202,74 @@ def planck_integral(x1, x2):
         f1 = 0
     else:
         if x1 < cutoff_upper_lower:
-            f1 = planck_lower_series(x1)
+            f1 = planck3_lower_series(x1)
         else:
             upper_precision = True
-            f1 = planck_upper_series(x1)
+            f1 = planck3_upper_series(x1)
 
     if x2 == np.inf:
         if upper_precision:
             return f1 * sign
         return (1 - f1) * sign
     if x2 < cutoff_upper_lower:
-        f2 = planck_lower_series(x2)
+        f2 = planck3_lower_series(x2)
         return (f2 - f1) * sign
-    f2 = planck_upper_series(x2)
+    f2 = planck3_upper_series(x2)
+    if upper_precision:
+        return (f1 - f2) * sign
+    return (1 - f1 - f2) * sign
+
+
+@vectorize(
+    [float32(float32, float32), float64(float64, float64)],
+    target="parallel",
+    fastmath=True,
+)
+def planck2_integral(x1, x2):
+    """Returns the definite integral of the normalized (frequency)
+    Planck function norm * x^2/(exp(x)-1) from x1 to x2, accurate to machine
+    precision
+
+    Normalization is 1/integral(x^3 exp(x) - 1) = 15/pi^4, such that
+    this can be used to compute average photon energies or photon
+    numbers
+    """
+    if x2 < x1:
+        # assume x1 < x2 throughout, and just remember the original parity
+        x1, x2 = x2, x1
+        sign = -1
+    else:
+        sign = 1
+
+    cutoff_upper_lower = 3  # where to switch between small x and large x series approx
+
+    # initialize flag for if we need to take care with precision
+    upper_precision = False
+
+    if x1 == 0:
+        f1 = 0
+    else:
+        if x1 < cutoff_upper_lower:
+            f1 = planck2_lower_series(x1)
+        else:
+            upper_precision = True
+            f1 = planck2_upper_series(x1)
+
+    if x2 == np.inf:
+        if upper_precision:
+            return f1 * sign
+        return (1 - f1) * sign
+    if x2 < cutoff_upper_lower:
+        f2 = planck2_lower_series(x2)
+        return (f2 - f1) * sign
+    f2 = planck2_upper_series(x2)
     if upper_precision:
         return (f1 - f2) * sign
     return (1 - f1 - f2) * sign
 
 
 @njit(fastmath=True, error_model="numpy")
-def planck_function(x):
+def planck_function3(x):
     """Planck function normalized to integrate to 1"""
     return x**3 / (np.exp(x) - 1) * 0.15398973382026507
 
@@ -163,4 +281,4 @@ def planck_integral_gaussian_quadrature(a, b):
     """Integrates the Planck function from a to b using 9th-order Gaussian quadrature"""
     mu = 2
     roots_mapped = ((b - a) / 2)[:, None] * (roots + 1) + a[:, None]
-    return np.sum(planck_function(roots_mapped) * weights, axis=1) * (b - a) / mu
+    return np.sum(planck_function3(roots_mapped) * weights, axis=1) * (b - a) / mu

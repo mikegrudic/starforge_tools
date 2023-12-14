@@ -9,6 +9,7 @@ def simple_powerlaw_fit(
     alpha_min=-4,
     alpha_max=4,
     quantiles=[0.16, 0.5, 0.84],
+    return_grid=False
 ):
     """Computes the specified quantiles of the posterior distribution of the power law slope alpha, given a dataset and desired quantiles
 
@@ -44,4 +45,7 @@ def simple_powerlaw_fit(
     prob /= np.trapz(prob, alpha_grid)  # normalize
 
     q = np.interp(quantiles, np.cumsum(prob) / prob.sum(), alpha_grid)
-    return q  # returns quantiles of the posterior distribution
+    if return_grid:
+        return q, alpha_grid, prob
+    else:
+        return q  # returns quantiles of the posterior distribution

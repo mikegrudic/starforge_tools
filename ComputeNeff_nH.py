@@ -5,6 +5,7 @@ Usage: ComputeNeff_nH.py [options]
 Options:
     -h --help                Show this screen
     --simPath=<simPath>      Path to simulation directory
+    --outPath=<outPath>      Path to output directory [default: ./]
     --snapLow=<snapLow>      Lowest simulation snapshot number
     --snapHigh=<snapHigh>    Highest simulation snapshot number
     --nsnap=<nsnap>          Number of snapshots to process
@@ -28,9 +29,9 @@ import matplotlib.colors as colors
 mh = 1.67e-24
 AV_fac = 6.289E-22
 
-def computeNeff_nH(snapi, simPath, healPix=False, NPIX=6, healVect=None, ):
-    outAvnh = simPath + "avnh_" + str(snapi) + ".out"
-    outPlot = simPath + "avnh_" + str(snapi) + ".pdf"
+def computeNeff_nH(snapi, simPath, outPath, healPix=False, NPIX=6, healVect=None, ):
+    outAvnh = outPath + "avnh_" + str(snapi) + ".out"
+    outPlot = outPath + "avnh_" + str(snapi) + ".pdf"
     fileName = simPath+"snapshot_%03d.hdf5"%snapi
     F = h5py.File(fileName)
     UNIT_LENGTH = F['Header'].attrs['UnitLength_In_CGS']
@@ -95,6 +96,11 @@ if __name__ == '__main__':
     simPath = args["--simPath"]
     if simPath[-1] != "/":
         simPath += "/"
+
+    outPath = args["--outPath"]
+    if outPath[-1] != "/":
+        outPath += "/"
+
     snapLow = int(args["--snapLow"])
     snapHigh = int(args["--snapHigh"])
     if snapLow > snapHigh:
@@ -130,12 +136,12 @@ if __name__ == '__main__':
     
     if ntasks > 1:
         with Pool(processes=ntasks) as pool:
-            results = pool.map(partial(computeNeff_nH, simPath=simPath, healPix=healPix, NPIX=NPIX, healVect=healVect), np.arange(snapLow, snapHigh+1, dN))
+            results = pool.map(partial(computeNeff_nH, simPath=simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect), np.arange(snapLow, snapHigh+1, dN))
             pool.close()
             pool.join()
     else:
         for snapi in np.arange(snapLow, snapHigh+1, dN):
-            computeNeff_nH(snapi, simPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
+            computeNeff_nH(snapi, simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
     
 
 

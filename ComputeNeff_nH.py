@@ -21,6 +21,8 @@ from meshoid import Meshoid
 from pytreegrav import ColumnDensity
 import numba
 
+from glob import glob
+
 from docopt import docopt 
 
 import matplotlib.pyplot as plt
@@ -107,7 +109,21 @@ if __name__ == '__main__':
         print("Oops! You seemed to have set snapLow > snapHigh. I'll fix that for you.")
         snapLow, snapHigh = snapHigh, snapLow
     nsnap = int(args["--nsnap"])
-    dN = (snapHigh - snapLow)/nsnap
+
+    fileList = np.array(glob(simPath+"snapshot_*.hdf5"))
+    snapIndices = np.array([int(file.split("_")[-1].split(".")[0]) for file in fileList])
+
+    fileList = fileList[np.argsort(snapIndices)]
+    snapIndices = snapIndices[np.argsort(snapIndices)]
+
+    indLow = np.where(snapIndices >= snapLow)[0][0]
+    indHigh = np.where(snapIndices <= snapHigh)[0][-1]
+
+    dN = (indHigh+1 - indLow)//nsnap
+    indList = np.linspace(indLow, indHigh, nsnap, endpoint=True).astype(int)
+    snapList = snapIndices[indList]
+
+    fileList2 = fileList[indList]
 
     ntasks = int(args["--ntasks"])
     if ntasks > 1:
@@ -136,11 +152,11 @@ if __name__ == '__main__':
     
     if ntasks > 1:
         with Pool(processes=ntasks) as pool:
-            results = pool.map(partial(computeNeff_nH, simPath=simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect), np.arange(snapLow, snapHigh+1, dN))
+            results = pool.map(partial(computeNeff_nH, simPath=simPath, outPath=outPath, healPix=healPix, NPIX=NPIX, healVect=healVect), snapList)
             pool.close()
             pool.join()
     else:
-        for snapi in np.arange(snapLow, snapHigh+1, dN):
+        for snapi in snapList:
             computeNeff_nH(snapi, simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
     
 

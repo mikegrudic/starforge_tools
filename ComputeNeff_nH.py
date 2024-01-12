@@ -82,7 +82,7 @@ def computeNeff_nH(snapi, simPath, outPath, healPix=False, NPIX=6, healVect=None
     ax.legend(loc='upper left')
 
     col_slice = M.Slice(AvEff,center=np.array([0,0,0]),size=3,res=res) 
-    p = ax2.pcolormesh(X, Y, col_slice, norm=colors.LogNorm(vmin=1E-1, vmax=1E2), cmap='magma', rasterized=True)
+    p = ax2.pcolormesh(X, Y, col_slice, norm=colors.LogNorm(vmin=1E20, vmax=1E23), cmap='magma', rasterized=True)
     ax2.set_aspect('equal')
     ax2.set_xlabel("X (pc)")
     ax2.set_ylabel("Y (pc)")

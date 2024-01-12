@@ -110,36 +110,6 @@ if __name__ == '__main__':
         snapLow, snapHigh = snapHigh, snapLow
     nsnap = int(args["--nsnap"])
 
-    fileList = np.array(glob(simPath+"snapshot_*.hdf5"))
-    snapIndices = np.array([int(file.split("_")[-1].split(".")[0]) for file in fileList])
-
-    fileList = fileList[np.argsort(snapIndices)]
-    snapIndices = snapIndices[np.argsort(snapIndices)]
-
-    indLow = np.where(snapIndices >= snapLow)[0][0]
-    indHigh = np.where(snapIndices <= snapHigh)[0][-1]
-
-    dN = (indHigh+1 - indLow)//nsnap
-    indList = np.linspace(indLow, indHigh, nsnap, endpoint=True).astype(int)
-    snapList = snapIndices[indList]
-
-    fileList2 = fileList[indList]
-
-    ntasks = int(args["--ntasks"])
-    if ntasks > 1:
-        from multiprocessing import Pool
-        from functools import partial
-        parallel = True
-        nthread = int(args["--nthread"])
-        if ntasks > nsnap:
-            ntasks = nsnap
-            print("Defaulted to %d threads"%nsnap)
-        if nthread < ntasks:
-            print("Too few threads! Defaulting to ntasks = nthread")
-            ntasks = nthread
-        nthread_per_task = nthread//ntasks
-        numba.set_num_threads(nthread_per_task)
-
     NSIDE = int(args["--NSIDE"])
     healPix = False
     if NSIDE > 0:
@@ -149,15 +119,48 @@ if __name__ == '__main__':
     else:
         NPIX = 6
         healVect = None
-    
-    if ntasks > 1:
-        with Pool(processes=ntasks) as pool:
-            results = pool.map(partial(computeNeff_nH, simPath=simPath, outPath=outPath, healPix=healPix, NPIX=NPIX, healVect=healVect), snapList)
-            pool.close()
-            pool.join()
+
+    if nsnap == 1 or snapLow == snapHigh:
+        computeNeff_nH(snapLow, simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
     else:
-        for snapi in snapList:
-            computeNeff_nH(snapi, simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
+        fileList = np.array(glob(simPath+"snapshot_*.hdf5"))
+        snapIndices = np.array([int(file.split("_")[-1].split(".")[0]) for file in fileList])
+
+        fileList = fileList[np.argsort(snapIndices)]
+        snapIndices = snapIndices[np.argsort(snapIndices)]
+
+        indLow = np.where(snapIndices >= snapLow)[0][0]
+        indHigh = np.where(snapIndices <= snapHigh)[0][-1]
+
+        dN = (indHigh+1 - indLow)//nsnap
+        indList = np.linspace(indLow, indHigh, nsnap, endpoint=True).astype(int)
+        snapList = snapIndices[indList]
+
+        fileList2 = fileList[indList]
+
+        ntasks = int(args["--ntasks"])
+        if ntasks > 1:
+            from multiprocessing import Pool
+            from functools import partial
+            parallel = True
+            nthread = int(args["--nthread"])
+            if ntasks > nsnap:
+                ntasks = nsnap
+                print("Defaulted to %d threads"%nsnap)
+            if nthread < ntasks:
+                print("Too few threads! Defaulting to ntasks = nthread")
+                ntasks = nthread
+            nthread_per_task = nthread//ntasks
+            numba.set_num_threads(nthread_per_task)
+        
+        if ntasks > 1:
+            with Pool(processes=ntasks) as pool:
+                results = pool.map(partial(computeNeff_nH, simPath=simPath, outPath=outPath, healPix=healPix, NPIX=NPIX, healVect=healVect), snapList)
+                pool.close()
+                pool.join()
+        else:
+            for snapi in snapList:
+                computeNeff_nH(snapi, simPath, outPath, healPix=healPix, NPIX=NPIX, healVect=healVect)
     
 
 

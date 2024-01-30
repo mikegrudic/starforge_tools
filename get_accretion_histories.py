@@ -5,8 +5,8 @@ from sys import argv
 from natsort import natsorted
 import numpy as np
 
-mmin = 0.9
-mmax = 1.1
+mmin = 8
+mmax = 100
 
 for run in argv[1:]:
     mdict = {}

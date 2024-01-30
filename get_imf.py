@@ -5,8 +5,10 @@ from glob import glob
 from natsort import natsorted
 import numpy as np
 from simple_powerlaw_fit import simple_powerlaw_fit
+from os.path import abspath
 
-for run in argv[1:]: # give the output folders of the runs you want to look at    
+for run in (abspath(a) for a in argv[1:]): # give the output folders of the runs you want to look at    
+
     zams_mass_dict = {}
     t0_dict = {}
     try:
@@ -34,7 +36,7 @@ for run in argv[1:]: # give the output folders of the runs you want to look at
 
     M = float(run.split("/output")[0].split("M")[-1].split("_R")[0])
     R = float(run.split("/output")[0].split("_R")[-2].split("_")[0])
-    if "_z" in run:
+    if "_z" in run.split("/output")[1]:
         Z = float(run.split("_z")[1].split("/")[0])
     else:
         Z = 1

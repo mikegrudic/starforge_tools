@@ -6,9 +6,13 @@ Compute power spectra from STARFORGE snapshots. Runs in parallel
 Usage: ComputePowerSpectrum.py <files> ... [options]
 
 Options:                                                                       
-   -h --help                  Show this screen.
-   --boxsize=<L>              Size of the box on which to compute the power spectrum (defaults to 0.2 * simulation box size, -1 uses the full box size)
-   --res=<N>                  Size of the grid on which to compute the power spectrum [default: 256]   
+   -h --help                Show this screen.
+   --boxsize=<L>            Size of the box on which to compute the power 
+                            spectrum (defaults to 0.2 * simulation box size, 
+                            -1 uses the full box size)
+   --res=<N>                Size of the grid on which to compute the power 
+                            spectrum [default: 256]   
+   --verbose                Print what the code is doing to stdout as it runs  
 """
 
 from sys import argv
@@ -21,9 +25,11 @@ import numpy as np
 from scipy.fft import fftn, fftfreq
 from scipy.stats import binned_statistic
 from docopt import docopt
+from joblib import Parallel, delayed
 
 options = docopt(__doc__)
 snapshot_paths = options["<files>"]
+verbose = options["--verbose"]
 
 
 def GetPowerSpectrum(grid, res):
@@ -35,12 +41,10 @@ def GetPowerSpectrum(grid, res):
         vkSqr = np.abs(vk) ** 2
     freqs = fftfreq(res)
     freq3d = np.array(np.meshgrid(freqs, freqs, freqs, indexing="ij"))
-    intfreq = np.int_(np.around(freq3d * res) + 0.5)
-    kSqr = np.sum(np.abs(freq3d) ** 2, axis=0)
+    intfreq = np.int_(np.around(freq3d * res))
     intkSqr = np.sum(np.abs(intfreq) ** 2, axis=0)
     intk = intkSqr**0.5
-
-    kbins = np.arange(intk.max())
+    kbins = np.arange(intk.max()) * (1 + 1e-15)
 
     power_in_bin = binned_statistic(
         intk.flatten(), vkSqr.flatten(), bins=kbins, statistic="sum"
@@ -70,36 +74,45 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
         else:
             boxsize = 0.2 * F["Header"].attrs["BoxSize"]
 
-        print(boxsize)
         center = np.repeat(0.5 * F["Header"].attrs["BoxSize"], 3)
-
+        if verbose:
+            print("Reading snapshot...")
         cut = n > 0
         rho = rho[cut]
         x = np.array(F["PartType0"]["Coordinates"])[cut]
         m = np.array(F["PartType0"]["Masses"])[cut]
         v = np.array(F["PartType0"]["Velocities"])[cut] / 1e3
+        # v = np.sin(4 * np.pi * x[:, 0] / boxsize)
+        # v = np.c_[v, 0 * v, 0 * v]
         h = np.array(F["PartType0"]["SmoothingLength"])[cut]
         B = np.array(F["PartType0"]["MagneticField"])[cut] * 1e4
 
-        M = Meshoid(x, m, h)
+        if verbose:
+            print("Initializing meshoid instance...")
+        M = Meshoid(x, m, h, boxsize=boxsize, verbose=verbose)
+        if verbose:
+            print("Depositing mass to grid...")
         rhogrid = M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
-        vgrid = np.array(
-            [
-                M.InterpToGrid(
-                    v[:, i], size=boxsize, res=powerspec_gridres, center=center
-                )
-                for i in range(3)
-            ]
-        )
-        Bgrid = np.array(
-            [
-                M.InterpToGrid(
-                    B[:, i], size=boxsize, res=powerspec_gridres, center=center
-                )
-                for i in range(3)
-            ]
-        )
+        if verbose:
+            print("Interpolating v to grid...")
+        vgrid = M.InterpToGrid(v, size=boxsize, res=powerspec_gridres, center=center)
+        vgrid = np.rollaxis(vgrid, -1, 0)
 
+        if verbose:
+            print("Interpolating B to grid...")
+        Bgrid = M.InterpToGrid(B, size=boxsize, res=powerspec_gridres, center=center)
+        Bgrid = np.rollaxis(Bgrid, -1, 0)
+        # np.array(
+        #     [
+        #         M.InterpToGrid(
+        #             B[:, i], size=boxsize, res=powerspec_gridres, center=center
+        #         )
+        #         for i in range(3)
+        #     ]
+        # )
+
+        if verbose:
+            print("Computing power spectra...")
         powerspectra = []
         for grid in vgrid, Bgrid, rhogrid:
             k, powerspec = GetPowerSpectrum(grid, powerspec_gridres)
@@ -126,4 +139,7 @@ def func(x):
     return ComputePowerSpectra(x, options)
 
 
-Pool(1).map(func, snapshot_paths)
+# for s in snapshot_paths:
+Parallel(n_jobs=1)(delayed(ComputePowerSpectra)(x, options) for x in snapshot_paths)
+
+# Pool(1).map(func, snapshot_paths)

@@ -82,8 +82,6 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
         x = np.array(F["PartType0"]["Coordinates"])[cut]
         m = np.array(F["PartType0"]["Masses"])[cut]
         v = np.array(F["PartType0"]["Velocities"])[cut] / 1e3
-        # v = np.sin(4 * np.pi * x[:, 0] / boxsize)
-        # v = np.c_[v, 0 * v, 0 * v]
         h = np.array(F["PartType0"]["SmoothingLength"])[cut]
         B = np.array(F["PartType0"]["MagneticField"])[cut] * 1e4
 
@@ -92,7 +90,9 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
         M = Meshoid(x, m, h, boxsize=boxsize, verbose=verbose)
         if verbose:
             print("Depositing mass to grid...")
-        rhogrid = M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
+        rhogrid = 10 ** M.InterpToGrid(
+            np.log10(rho), size=boxsize, res=powerspec_gridres, center=center
+        )  # M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
         if verbose:
             print("Interpolating v to grid...")
         vgrid = M.InterpToGrid(v, size=boxsize, res=powerspec_gridres, center=center)

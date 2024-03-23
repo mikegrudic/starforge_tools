@@ -4,7 +4,7 @@
 Generates far-IR images of simulation snapshots that have dust temperature
 information.
 
-Usage: herschel.py <files> ... [options]
+Usage: dustemission.py <files> ... [options]
 
 Options:                                                                       
    -h --help                   Show this screen.
@@ -48,7 +48,7 @@ else:
 NUM_JOBS = int(options["--num_jobs"])
 
 
-def make_herschel_map_from_snapshot(path):
+def make_dustemission_map_from_snapshot(path):
     """Makes a dust emission map from a STARFORGE snapshot"""
     with h5py.File(path, "r") as F:
         x = np.float32(F["PartType0/Coordinates"][:])
@@ -72,11 +72,11 @@ def make_herschel_map_from_snapshot(path):
     X, Y = np.meshgrid(X, Y)
     Y = Y[::-1]
 
-    fname = path.split("/")[-1].replace(".hdf5", ".herschel.hdf5")
+    fname = path.split("/")[-1].replace(".hdf5", ".dustemission.hdf5")
     if OUTPATH:
         imgpath = OUTPATH + fname
     else:
-        outdir = str(pathlib.Path(path).parent.resolve()) + "/herschel/"
+        outdir = str(pathlib.Path(path).parent.resolve()) + "/dustemission/"
         if not isdir(outdir):
             mkdir(outdir)
         imgpath = outdir + fname
@@ -89,7 +89,7 @@ def make_herschel_map_from_snapshot(path):
 def main():
     # print(f"jobs={NUM_JOBS}")
     Parallel(n_jobs=NUM_JOBS)(
-        delayed(make_herschel_map_from_snapshot)(f) for f in options["<files>"]
+        delayed(make_dustemission_map_from_snapshot)(f) for f in options["<files>"]
     )
 
 

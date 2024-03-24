@@ -18,14 +18,14 @@ Options:
 
 from os import mkdir
 from os.path import isdir
+import pathlib
 from astropy import constants
 import astropy.units as u
-import pathlib
 import numpy as np
 from docopt import docopt
 import h5py
-from scipy.optimize import curve_fit
 from meshoid.radiation import dust_emission_map
+from meshoid.grid_deposition import GridSurfaceDensity
 from joblib import Parallel, delayed
 
 options = docopt(__doc__)
@@ -64,9 +64,9 @@ def make_dustemission_map_from_snapshot(path):
         center = CENTER
     else:
         center = 0.5 * np.array(3 * [boxsize])
-    intensity = dust_emission_map(x, m, h, Tdust, size, RES, WAVELENGTHS, center)
-
     dx = size / (RES - 1)
+    intensity = dust_emission_map(x, m, h, Tdust, size, RES, WAVELENGTHS, center)
+    sigmagas = GridSurfaceDensity(m, x, h.clip(dx, 1e100), center, size, RES)
     X = np.linspace(dx / 2, size - dx / 2, RES) + center[0]
     Y = np.linspace(dx / 2, size - dx / 2, RES) + center[1]
     X, Y = np.meshgrid(X, Y)
@@ -81,9 +81,11 @@ def make_dustemission_map_from_snapshot(path):
             mkdir(outdir)
         imgpath = outdir + fname
     with h5py.File(imgpath, "w") as F:
+        F.create_dataset("Wavelengths_um", data=WAVELENGTHS)
         F.create_dataset("X_pc", data=X)
         F.create_dataset("Y_pc", data=Y)
         F.create_dataset("Intensity_cgs", data=intensity)
+        F.create_dataset("SurfaceDensity_Msun_pc2", data=sigmagas)
 
 
 def main():

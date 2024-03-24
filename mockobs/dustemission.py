@@ -19,12 +19,14 @@ Options:
 from os import mkdir
 from os.path import isdir
 import pathlib
-from astropy import constants
-import astropy.units as u
 import numpy as np
 from docopt import docopt
 import h5py
-from meshoid.radiation import dust_emission_map
+from meshoid.radiation import (
+    dust_emission_map,
+    modified_blackbody_fit_image,
+    modified_blackbody_fit_gaussnewton,
+)
 from meshoid.grid_deposition import GridSurfaceDensity
 from joblib import Parallel, delayed
 
@@ -54,7 +56,9 @@ def make_dustemission_map_from_snapshot(path):
         x = np.float32(F["PartType0/Coordinates"][:])
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
+        Z = np.float32(F["PartType0/Metallicity"][:][:, 0] / 0.0142)
         Tdust = np.float32(F["PartType0/Dust_Temperature"][:])
+        Tdust_avg = np.average(Tdust, weights=m)
         boxsize = F["Header"].attrs["BoxSize"]
     if SIZE:
         size = SIZE
@@ -65,7 +69,7 @@ def make_dustemission_map_from_snapshot(path):
     else:
         center = 0.5 * np.array(3 * [boxsize])
     dx = size / (RES - 1)
-    intensity = dust_emission_map(x, m, h, Tdust, size, RES, WAVELENGTHS, center)
+    intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
     sigmagas = GridSurfaceDensity(m, x, h.clip(dx, 1e100), center, size, RES)
     X = np.linspace(dx / 2, size - dx / 2, RES) + center[0]
     Y = np.linspace(dx / 2, size - dx / 2, RES) + center[1]
@@ -87,9 +91,33 @@ def make_dustemission_map_from_snapshot(path):
         F.create_dataset("Intensity_cgs", data=intensity)
         F.create_dataset("SurfaceDensity_Msun_pc2", data=sigmagas)
 
+        if len(WAVELENGTHS) >= 3:
+            # fit each pixel to a modified blackbody as an observer would
+            params = modified_blackbody_fit_image(intensity, WAVELENGTHS)
+            tau0, beta, Tdust_fit = (
+                params[:, :, 0],
+                params[:, :, 1],
+                params[:, :, 2],
+            )
+
+            F.create_dataset("Fit_Tau500um", data=tau0)
+            F.create_dataset("Fit_Beta", data=beta)
+            F.create_dataset("Fit_Tdust", data=Tdust_fit)
+            F.create_dataset("Tdust_massweighted", data=Tdust_avg)
+
+            params_avg = modified_blackbody_fit_gaussnewton(
+                intensity.mean((0, 1)), WAVELENGTHS
+            )
+
+            tau0, beta, Tdust_fit = params_avg
+
+            F.create_dataset("SEDFit_Tau500um", data=tau0)
+            F.create_dataset("SEDFit_Beta", data=beta)
+            F.create_dataset("SEDFit_Tdust", data=Tdust_fit)
+
 
 def main():
-    # print(f"jobs={NUM_JOBS}")
+    """Runs dust mapping and SED fitting on input snapshots"""
     Parallel(n_jobs=NUM_JOBS)(
         delayed(make_dustemission_map_from_snapshot)(f) for f in options["<files>"]
     )

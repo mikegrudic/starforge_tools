@@ -7,17 +7,6 @@ from scipy.optimize import curve_fit
 from astropy import constants, units as u
 
 
-def modified_blackbody_fit(sed, wavelengths):
-    freqs = (constants.c / (wavelengths * u.si.micron)).cgs.value
-    kTconst = constants.h.cgs.value / constants.k_B.cgs.value
-    fmin = freqs.min()
-
-    def fitfunc(freq, T, beta, norm):
-        return norm * (freq / fmin) ** (3 + beta) / np.expm1(freq * kTconst / T)
-
-    return curve_fit(fitfunc, freqs, sed / sed.min(), p0=(20.0, 1.5, 1.0))[0]
-
-
 @njit(fastmath=True, error_model="numpy")
 def modified_planck_function(freqs, logtau, beta, T):
     """Modified blackbody function"""
@@ -51,7 +40,7 @@ def modified_blackbody_fit_image(image, wavelengths):
 
 
 @njit(error_model="numpy")
-def modified_blackbody_fit_gaussnewton(sed, wavelengths):
+def modified_blackbody_fit_gaussnewton(sed, wavelengths, p0=(0, 1.5, 1.5)):
     """Fits a modified blackbody SED to the provided SED sampled at
     a set of wavelengths using Gauss-Newton iteration
     """
@@ -62,7 +51,7 @@ def modified_blackbody_fit_gaussnewton(sed, wavelengths):
     max_iter = 30
 
     # preliminary step: assume constant beta and iterate just for logtau and T
-    logtau, beta, logT = 0, 1.5, np.log10(30.0)
+    logtau, beta, logT = p0
     params = np.array([logtau, logT])
     i = 0
     while error > tol and i < max_iter:
@@ -81,7 +70,6 @@ def modified_blackbody_fit_gaussnewton(sed, wavelengths):
         i += 1
         if i > max_iter:
             return np.nan * np.ones(3)
-        # print(params, np.sum(residual**2))
 
     params = np.array([logtau, beta, logT])
     tol, i, error, error_best = 1e-3, 0, 1e100, 1e100
@@ -97,11 +85,21 @@ def modified_blackbody_fit_gaussnewton(sed, wavelengths):
         res_sqr = (residual * residual).sum()
         error_best = min(error_best, res_sqr)
         i += 1
-        # print(params, res_sqr, error_best)
         if i > max_iter:
             return np.nan * np.ones(3)
 
     return params
+
+
+def modified_blackbody_fit_curvefit(sed, wavelengths, p0=(0, 1.5, 1.5)):
+    freqs = (constants.c / (wavelengths * u.si.micron)).cgs.value
+    kTconst = constants.h.cgs.value / constants.k_B.cgs.value
+    fmin = freqs.min()
+
+    def fitfunc(freq, logtau, beta, T):
+        return modified_planck_function(freqs, logtau, beta, T)
+
+    return curve_fit(fitfunc, freqs, sed / sed.min(), p0=p0)[0]
 
 
 @njit(fastmath=True, error_model="numpy")

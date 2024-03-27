@@ -71,8 +71,8 @@ def make_dustemission_map_from_snapshot(path):
     dx = size / (RES - 1)
     intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
     sigmagas = GridSurfaceDensity(m, x, h.clip(dx, 1e100), center, size, RES)
-    X = np.linspace(dx / 2, size - dx / 2, RES) + center[0]
-    Y = np.linspace(dx / 2, size - dx / 2, RES) + center[1]
+    X = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[0]
+    Y = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[1]
     X, Y = np.meshgrid(X, Y)
     Y = Y[::-1]
 

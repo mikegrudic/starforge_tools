@@ -30,6 +30,8 @@ from meshoid.radiation import (
 from meshoid.grid_deposition import GridSurfaceDensity
 from joblib import Parallel, delayed
 
+np.random.seed(42)
+
 options = docopt(__doc__)
 WAVELENGTHS = np.array([float(s) for s in options["--wavelengths"].split(",")])
 RES = int(options["--res"])
@@ -70,6 +72,14 @@ def make_dustemission_map_from_snapshot(path):
         center = 0.5 * np.array(3 * [boxsize])
     dx = size / (RES - 1)
     intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
+
+    # add noise
+    # SNR = 60
+    # noise_norm = intensity/SNR + 1e-18 * 10**(-np.log10(WAVELENGTHS[None,None,:]/500) * 2)
+    # SNR_tot = noise_norm / intensity
+    # N_eff = SNR_tot**-2
+    # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
+    
     sigmagas = GridSurfaceDensity(m, x, h.clip(dx, 1e100), center, size, RES)
     X = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[0]
     Y = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[1]
@@ -89,6 +99,7 @@ def make_dustemission_map_from_snapshot(path):
         F.create_dataset("X_pc", data=X)
         F.create_dataset("Y_pc", data=Y)
         F.create_dataset("Intensity_cgs", data=intensity)
+#        F.create_dataset("Intensity_noise_cgs", data=noise)
         F.create_dataset("SurfaceDensity_Msun_pc2", data=sigmagas)
 
         if len(WAVELENGTHS) >= 3:

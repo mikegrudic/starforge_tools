@@ -12,7 +12,7 @@ Options:
    --center=<X,Y>              Center of the image (defaults to box center)
    --res=<N>                   Resolution of the image [default: 1024]   
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
-   --output_path               Output path for images (defaults to cwd)
+   --output_path               Output path for images (defaults to /dustemission directory next to the snapshot)
    --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]
 """
 

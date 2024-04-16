@@ -91,7 +91,7 @@ def make_surfdens_map_from_snapshot(path):
 
 
 def main():
-    """Runs dust mapping and SED fitting on input snapshots"""
+    """Runs surface density mapping on input snapshots"""
     Parallel(n_jobs=NUM_JOBS)(
         delayed(make_surfdens_map_from_snapshot)(f) for f in options["<files>"]
     )

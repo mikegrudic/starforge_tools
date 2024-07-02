@@ -13,7 +13,7 @@ Options:
    --res=<N>                   Resolution of the image [default: 1024]   
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
    --output_path               Output path for images (defaults to /dustemission directory next to the snapshot)
-   --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]
+   --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]          
 """
 
 from os import mkdir
@@ -52,15 +52,28 @@ else:
 NUM_JOBS = int(options["--num_jobs"])
 
 
+
+
 def make_dustemission_map_from_snapshot(path):
     """Makes a dust emission map from a STARFORGE snapshot"""
     with h5py.File(path, "r") as F:
         x = np.float32(F["PartType0/Coordinates"][:])
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
-        Z = np.float32(F["PartType0/Metallicity"][:][:, 0] / 0.0142)
-        Tdust = np.float32(F["PartType0/Dust_Temperature"][:])
-        Tdust_avg = np.average(Tdust, weights=m)
+        Z = np.float32(F["PartType0/Metallicity"][:]/ 0.0142)
+        if len(Z.shape) == 2:
+            Z = np.float32(F["PartType0/Metallicity"][:][:, 0]/ 0.0142)
+        else:
+            Z = np.float32(F["PartType0/Metallicity"][:]/ 0.0142)
+            
+
+        if "PartType0/Dust_Temperature" in F.keys():
+            Tdust = np.float32(F["PartType0/Dust_Temperature"][:])
+            Tdust_avg = np.average(Tdust, weights=m)
+        else:
+            Tdust = np.repeat(20, len(x))
+            Tdust_avg = np.average(Tdust)
+
         boxsize = F["Header"].attrs["BoxSize"]
     if SIZE:
         size = SIZE
@@ -70,8 +83,8 @@ def make_dustemission_map_from_snapshot(path):
         center = CENTER
     else:
         center = 0.5 * np.array(3 * [boxsize])
-    dx = size / (RES - 1)
-    intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
+        dx = size / (RES - 1)
+        intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
 
     # add noise
     # SNR = 60
@@ -91,9 +104,9 @@ def make_dustemission_map_from_snapshot(path):
         imgpath = OUTPATH + fname
     else:
         outdir = str(pathlib.Path(path).parent.resolve()) + "/dustemission/"
-        if not isdir(outdir):
-            mkdir(outdir)
-        imgpath = outdir + fname
+    if not isdir(outdir):
+        mkdir(outdir)
+    imgpath = outdir + fname
     with h5py.File(imgpath, "w") as F:
         F.create_dataset("Wavelengths_um", data=WAVELENGTHS)
         F.create_dataset("X_pc", data=X)

@@ -81,10 +81,9 @@ def make_dustemission_map_from_snapshot(path):
         center = CENTER
     else:
         center = 0.5 * np.array(3 * [boxsize])
-        dx = size / (RES - 1)
-        intensity = dust_emission_map(
-            x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center
-        )
+
+    dx = size / (RES - 1)
+    intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
 
     # add noise
     # SNR = 60

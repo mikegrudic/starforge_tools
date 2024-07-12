@@ -61,10 +61,11 @@ def make_dustemission_map_from_snapshot(path):
         x = np.float32(F["PartType0/Coordinates"][:])
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
+        Z = F["PartType0/Metallicity"][:]
         if len(Z.shape) == 2:
-            Z = np.float32(F["PartType0/Metallicity"][:][:, 0] / SOLAR_Z)
+            Z = Z[:, 0] / SOLAR_Z
         else:
-            Z = np.float32(F["PartType0/Metallicity"][:] / SOLAR_Z)
+            Z = Z / SOLAR_Z
 
         if "PartType0/Dust_Temperature" in F.keys():
             Tdust = np.float32(F["PartType0/Dust_Temperature"][:])

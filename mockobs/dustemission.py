@@ -12,7 +12,8 @@ Options:
    --center=<X,Y>              Center of the image (defaults to box center)
    --res=<N>                   Resolution of the image [default: 1024]   
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
-   --output_path               Output path for images (defaults to /dustemission directory next to the snapshot)
+   --output_path               Output path for images (defaults to /dustemission 
+                               directory next to the snapshot)   
    --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]          
 """
 
@@ -51,7 +52,7 @@ else:
     OUTPATH = None
 NUM_JOBS = int(options["--num_jobs"])
 
-
+SOLAR_Z = 0.0142
 
 
 def make_dustemission_map_from_snapshot(path):
@@ -60,19 +61,16 @@ def make_dustemission_map_from_snapshot(path):
         x = np.float32(F["PartType0/Coordinates"][:])
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
-        Z = np.float32(F["PartType0/Metallicity"][:]/ 0.0142)
         if len(Z.shape) == 2:
-            Z = np.float32(F["PartType0/Metallicity"][:][:, 0]/ 0.0142)
+            Z = np.float32(F["PartType0/Metallicity"][:][:, 0] / SOLAR_Z)
         else:
-            Z = np.float32(F["PartType0/Metallicity"][:]/ 0.0142)
-            
+            Z = np.float32(F["PartType0/Metallicity"][:] / SOLAR_Z)
 
         if "PartType0/Dust_Temperature" in F.keys():
             Tdust = np.float32(F["PartType0/Dust_Temperature"][:])
-            Tdust_avg = np.average(Tdust, weights=m)
         else:
             Tdust = np.repeat(20, len(x))
-            Tdust_avg = np.average(Tdust)
+        Tdust_avg = np.average(Tdust, weights=m)
 
         boxsize = F["Header"].attrs["BoxSize"]
     if SIZE:
@@ -84,7 +82,9 @@ def make_dustemission_map_from_snapshot(path):
     else:
         center = 0.5 * np.array(3 * [boxsize])
         dx = size / (RES - 1)
-        intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
+        intensity = dust_emission_map(
+            x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center
+        )
 
     # add noise
     # SNR = 60
@@ -92,12 +92,11 @@ def make_dustemission_map_from_snapshot(path):
     # SNR_tot = noise_norm / intensity
     # N_eff = SNR_tot**-2
     # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
-    
-    sigmagas = GridSurfaceDensity(m, x, h.clip(dx, 1e100), center, size, RES)
-    X = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[0]
-    Y = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[1]
-    X, Y = np.meshgrid(X, Y)
-    Y = Y[::-1]
+    h = h.clip(dx, 1e100)
+    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES)
+    X = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[0]
+    Y = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[1]
+    X, Y = np.meshgrid(X, Y, indexing="ij")
 
     fname = path.split("/")[-1].replace(".hdf5", ".dustemission.hdf5")
     if OUTPATH:
@@ -112,7 +111,7 @@ def make_dustemission_map_from_snapshot(path):
         F.create_dataset("X_pc", data=X)
         F.create_dataset("Y_pc", data=Y)
         F.create_dataset("Intensity_cgs", data=intensity)
-#        F.create_dataset("Intensity_noise_cgs", data=noise)
+        #        F.create_dataset("Intensity_noise_cgs", data=noise)
         F.create_dataset("SurfaceDensity_Msun_pc2", data=sigmagas)
 
         if len(WAVELENGTHS) >= 3:

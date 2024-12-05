@@ -1,0 +1,6 @@
+ipython
+sphinx_rtd_theme
+numba
+numpy
+scipy
+astropy

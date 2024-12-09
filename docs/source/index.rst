@@ -5,16 +5,9 @@ STARFORGE Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Common Workflows:
+   :caption: Pages:
    
    common_workflows
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Data Products:
-   
-   data
-
 
 Indices and tables
 ==================

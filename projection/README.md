@@ -1,41 +1,9 @@
-# starforge_tools
-useful scripts for running and analyzing STARFORGE simulations
+# Projected quantities
+Scripts for computing column and surface densities
 
-## AddDustToSnapshot.py
-Add dust particles to an existing gas-only snapshot
+## ComputeNeff_nH.py
+Computes the ``effective" H column density ray-traced to infinity at the location of each gas cell.
 
-## AddStarToSnapshot.py
-Add a star particle with arbitrary properties to an existing snapshot
+## surfdens_map.py
+Generates a gas mass surface density map from a snapshot.
 
-## ComputeCorrFuncs.py 
-Computes density, velocity, and B-field structure functions
-
-## CorePhinder.py
-Find self-gravitating iso-density contours
-
-##   StarSnapshots.py
-Generate snapshots with stars only from gas+stars snapshots
-
-## TrimSnapshot.py
-Apply zip compression and trim unnecessary data fields from snapshots
-
-## fit_mass_func.py
-Markov Chain Monte Carlo fits to IMF datasets, including Kroupa, Chabrier, Paravanno forms
-
-## get_accretion_histories.py
-Extract accretion histories for stars in a specified mass range
-
-## get_imf.py
-Extract initial masses for all stars that ever form in a simulation
-
-## get_temperature.py
-Compute temperature from other thermochemical quantities, use only if Temperature is not available in the data
-
-## main_sequence_properties.py
-Tout fitting functions for zero-age main sequence stellar properties
-
-## simple_powerlaw_fit.py
-Simple Bayesian power-law posterior estimation for IMF fitting
-
-## special_functions.py
-Some useful special functions: Planck integrals, log-poisson function

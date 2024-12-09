@@ -1,12 +1,19 @@
-Welcome to the starforge documentation!
+.. image:: wiki_pages/anvil_of_creation.png
+
+STARFORGE Documentation
 ===================================
 
 .. toctree::
    :maxdepth: 2
-   :caption: Contents:
-
+   :caption: Common Workflows:
    
-   test
+   common_workflows
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Data Products:
+   
+   data
 
 
 Indices and tables

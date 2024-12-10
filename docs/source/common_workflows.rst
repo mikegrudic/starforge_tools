@@ -6,13 +6,13 @@
    :caption: Common Simulation Workflows:
 
    wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs
-   wiki_pages/analyzing_code_performance_with_vtune
-   wiki_pages/black_hole-gmc_encounter_setups
    wiki_pages/compiler_flags_for_different_starforge_setups
-   wiki_pages/fitting_to_a_power-law_or_schechter_function
    wiki_pages/getting_settup_on_frontera_stampede_tacc_systems
+   wiki_pages/fitting_to_a_power-law_or_schechter_function
    wiki_pages/machine-specific_tips_notes_and_submit_scripts
+   wiki_pages/analyzing_code_performance_with_vtune
    wiki_pages/notes_for_setting_up_turbsphere_runs
    wiki_pages/running_gizmo_on_bridges-2_anvil_amd_epyc_systems
+   wiki_pages/black_hole-gmc_encounter_setups
    wiki_pages/hpc_linux_tips_tricks
    wiki_pages/setting_up_ffmpeg

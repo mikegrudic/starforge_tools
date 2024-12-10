@@ -2,8 +2,7 @@ Transferring files without having to stay logged in
 ---------------------------------------------------
 
 When moving around large datasets it is useful to keep the transfer
-going even if you want to log out. To do so, start running your usual
-transfer command:
+going even if you want to log out. Ideally, just use Globus Transfer. But if that is not an option, and you are relying upon the standard UNIX file transfer tools, start running your usual transfer command:
 
 .. code:: bash
 

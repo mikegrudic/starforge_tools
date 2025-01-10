@@ -6,16 +6,16 @@ from natsort import natsorted
 import numpy as np
 from simple_powerlaw_fit import simple_powerlaw_fit
 from os.path import abspath
+from joblib import Parallel, delayed
 
-for run in (abspath(a) for a in argv[1:]): # give the output folders of the runs you want to look at    
+def get_imf(run): # give the output folders of the runs you want to look at
+    print(run)
     zams_mass_dict = {}
     t0_dict = {}
-    try:
-        snaps = glob(run + "/snapshot_*.hdf5")
-        print(snaps)
-        for s in snaps:
-            print(s)
-            #            if "stars" in s: continue
+    snaps = glob(run + "/snapshot_*.hdf5")
+    for s in snaps:
+        if "stars" in s: continue
+        try:
             with h5py.File(s, "r") as F:
                 if not "PartType5" in F.keys():
                     continue
@@ -28,12 +28,11 @@ for run in (abspath(a) for a in argv[1:]): # give the output folders of the runs
                         zams_mass_dict[star_id] = star_mass
                         t0_dict[star_id] = t
                     else:
-                        zams_mass_dict[star_id] = max(
-                            star_mass, zams_mass_dict[star_id]
-                        )
+                        zams_mass_dict[star_id] = max(star_mass, zams_mass_dict[star_id]) 
                         t0_dict[star_id] = min(t, t0_dict[star_id])
-    except:
-        continue
+        except:
+            print(f"Could not open {s}")
+
     # raise ValueError("problem getting IMF for " + run)
 
     M = float(run.split("/output")[0].split("M")[-1].split("_R")[0])
@@ -99,3 +98,8 @@ for run in (abspath(a) for a in argv[1:]): # give the output folders of the runs
         ),
         header=header,
     )
+
+paths = [abspath(a) for a in argv[1:]]
+
+#[]
+Parallel(n_jobs=32)(delayed(get_imf)(a) for a in paths)

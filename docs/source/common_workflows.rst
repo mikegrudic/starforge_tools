@@ -16,3 +16,4 @@
    wiki_pages/black_hole-gmc_encounter_setups
    wiki_pages/hpc_linux_tips_tricks
    wiki_pages/setting_up_ffmpeg
+   wiki_pages/reading_bhswallow_and_bhformation_datafiles

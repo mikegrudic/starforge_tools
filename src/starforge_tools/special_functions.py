@@ -2,6 +2,8 @@
 
 from numba import njit, vectorize, float32, float64, int32, int64, boolean
 import numpy as np
+from astropy.constants import h, c, k_B
+from astropy import units as u
 
 
 @vectorize(fastmath=True)
@@ -213,14 +215,31 @@ def planck_integral(x1, x2, p):
     """
     if x1 > x2:  # assume x2 is the larger in magnitude
         x1, x2 = x2, x1
-        sign = -1.0
+        fac = -1.0
     else:
-        sign = 1.0
+        fac = 1.0
 
-    cutoff = 3.0
+    normalized = True
+    if normalized:
+        fac /= PLANCK_NORM[p - 1]
 
-    if x1 > cutoff:
-        return sign * planck_upper_series(x1, x2, p)
-    if x2 < cutoff:
-        return sign * planck_gaussquad(x1, x2, p)
-    return sign * (planck_gaussquad(x1, cutoff, p) + planck_upper_series(cutoff, x2, p))
+    cutoff_for_series = 3.0
+
+    if x1 > cutoff_for_series:
+        return fac * planck_upper_series(x1, x2, p)
+    if x2 < cutoff_for_series:
+        return fac * planck_gaussquad(x1, x2, p)
+    return fac * (planck_gaussquad(x1, cutoff_for_series, p) + planck_upper_series(cutoff_for_series, x2, p))
+
+
+def planck_wavelength_integral(min_wavelength_um, max_wavelength_um, temp_K):
+    """Returns the fraction of SED energy between two wavelengths specified in microns,
+    for a given temperature"""
+
+    # convert to quantity x = h c / (wavelength k_B T)
+    const = (h * c / (k_B * u.K * u.um)).cgs.value
+    min_wavelength_um = np.array(min_wavelength_um)
+    max_wavelength_um = np.array(max_wavelength_um)
+    x_max = np.float64(const / (min_wavelength_um * temp_K))
+    x_min = np.float64(const / (max_wavelength_um * temp_K))
+    return planck_integral(x_min, x_max, 3)

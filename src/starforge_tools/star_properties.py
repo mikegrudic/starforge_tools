@@ -20,7 +20,7 @@ def luminosity_MS(mass):
     )
     lum_ms = np.atleast_1d(lum_ms)
     lum_ms[np.isnan(lum_ms)] = 0.0
-    return lum_ms
+    return np.float64(lum_ms)
 
 
 def radius_MS(mass):
@@ -41,7 +41,7 @@ def radius_MS(mass):
     )
     radius_ms = np.atleast_1d(radius_ms)
     radius_ms[np.isnan(radius_ms)] = 0.0
-    return radius_ms
+    return np.float64(radius_ms)
 
 
 VESC_FAC = np.sqrt(2 * c.G * c.M_sun / c.R_sun).to(u.km / u.s).value
@@ -86,7 +86,7 @@ def mdot_vms(mass, lum=None, radius=None, Z=1.0):
     T_eff = effective_temperature(mass, lum, radius)
     logmdot_wind_high = (
         -8.445
-        + 4.77 * np.log10(lum / 1e5)
+        + 4.77 * np.log10(lum.clip(1e-10) / 1e5)
         - 3.99 * np.log10(mass / 30)
         - 1.226 * np.log10(vwind_over_vesc(T_eff) / 2)
         + 0.761 * np.log10(Z)
@@ -113,14 +113,14 @@ def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
 def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
     """Number of photons with energy > energy_eV emitted per second, assuming blackbody spectrum, to machine precision"""
     if mass is not None and ((lum is None) or (radius is None)):
-        lum, radius = luminosity_MS(mass), radius_MS(mass)
+        lum, radius = luminosity_MS(mass).clip(1e-10), radius_MS(mass)
 
     T_eff = effective_temperature(mass, lum, radius)
     k_B = 8.617e-5  # in eV/K
     x1 = energy_eV / (k_B * T_eff)
     Lsun_cgs = 2.389e45
     planck_integral_fac = 0.37020884510871604  # ratio of integral of x^2/(exp(x)-1) over that of x^3/(exp(x) - 1)
-    return lum * Lsun_cgs / (k_B * T_eff) * planck_integral(x1, np.inf, 2) * planck_integral_fac
+    return np.float64(lum) * Lsun_cgs / (k_B * T_eff) * planck_integral(x1, np.inf, 2) * planck_integral_fac
 
 
 def Q_ionizing_approx(mass, energy_eV=13.6):

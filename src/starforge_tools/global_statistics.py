@@ -4,11 +4,12 @@ from os.path import isfile
 from glob import glob
 import numpy as np
 import h5py
-import astropy.units as u
+from astropy import units as u, constants as c
 from joblib import Parallel, delayed
 from natsort import natsorted
 from astropy.table import Table
 from astropy.io import ascii
+from starforge_tools.star_properties import Q_ionizing, wind_mdot, vwind
 
 
 class GlobalStatistics:
@@ -29,9 +30,7 @@ class GlobalStatistics:
             # loop over callable methods
             if callable(getattr(self, f)) and "get_" in f:
                 datafield = f.replace("get_", "")
-                if (stats_to_compute is not None) and (
-                    not datafield in stats_to_compute
-                ):
+                if (stats_to_compute is not None) and (not datafield in stats_to_compute):
                     continue
                 setattr(self, datafield, getattr(self, f)())  # call the getter function
                 if datafield != "units":
@@ -42,9 +41,7 @@ class GlobalStatistics:
         unitdict = {}
         for k in "UnitLength_In_CGS", "UnitMass_In_CGS", "UnitVelocity_In_CGS":
             unitdict[k] = self.header[k]
-        unitdict["UnitTime_In_CGS"] = (
-            unitdict["UnitLength_In_CGS"] / unitdict["UnitVelocity_In_CGS"]
-        )
+        unitdict["UnitTime_In_CGS"] = unitdict["UnitLength_In_CGS"] / unitdict["UnitVelocity_In_CGS"]
         return unitdict
 
     def get_stellar_mass_sum(self):
@@ -57,6 +54,44 @@ class GlobalStatistics:
         """Returns the maximum stellar mass in code units."""
         if "PartType5" in self.snapfile.keys():
             return np.max(self.snapfile["PartType5/BH_Mass"][:])
+        return 0
+
+    def get_bolometric_luminosity(self):
+        """Returns the total bolometric luminosity in solar units."""
+        if "PartType5" in self.snapfile.keys():
+            return np.sum(self.snapfile["PartType5/StarLuminosity_Solar"][:])
+        return 0
+
+    def get_ionizing_flux(self):
+        """Returns the number of H-ionizing photons emitted per second."""
+        if "PartType5" in self.snapfile.keys():
+            L = self.snapfile["PartType5/StarLuminosity_Solar"][:]
+            R = self.snapfile["PartType5/ProtoStellaRadius_inSolar"][:]
+            Q = Q_ionizing(lum=L, radius=R)
+            return Q.sum()
+        return 0
+
+    def get_wind_mdot(self):
+        """Returns the total wind mass loss rate in solar mass/yr."""
+        if "PartType5" in self.snapfile.keys():
+            L = self.snapfile["PartType5/StarLuminosity_Solar"][:]
+            M = self.snapfile["PartType5/BH_Mass"][:]
+            Z = self.snapfile["PartType5/Metallicity"][:, 0] / 0.014
+            mdot = wind_mdot(M, L, Z)
+            return mdot.sum()
+        return 0
+
+    def get_wind_luminosity(self):
+        """Returns the total wind luminosity in cgs."""
+        if "PartType5" in self.snapfile.keys():
+            L = self.snapfile["PartType5/StarLuminosity_Solar"][:]
+            R = self.snapfile["PartType5/ProtoStellaRadius_inSolar"][:]
+            M = self.snapfile["PartType5/BH_Mass"][:]
+            Z = self.snapfile["PartType5/Metallicity"][:, 0] / 0.014
+            mdot = wind_mdot(M, L, Z) * c.M_sun / u.yr
+            vw = vwind(M, L, R) * u.km / u.s
+            Lwind_cgs = (0.5 * mdot * vw * vw).cgs.value
+            return Lwind_cgs.sum()
         return 0
 
     def get_time_myr(self):
@@ -84,9 +119,7 @@ def statslist_to_table(statslist):
     return tab
 
 
-def get_globalstats_of_simulation(
-    rundir, n_jobs=-1, stats_to_compute=None, overwrite=False
-):
+def get_globalstats_of_simulation(rundir, n_jobs=-1, stats_to_compute=None, overwrite=False):
     """Does a pass over all snapshots to compute desired global statistics"""
     datafile_path = rundir + "/global_statistics.dat"
     if isfile(datafile_path) and not overwrite:
@@ -97,9 +130,7 @@ def get_globalstats_of_simulation(
         else:
             return tab
 
-    snaps = glob(rundir + "/snapshot*.hdf5") + glob(
-        rundir + "/stars_only/snapshot*.hdf5"
-    )
+    snaps = glob(rundir + "/snapshot*.hdf5") + glob(rundir + "/stars_only/snapshot*.hdf5")
     snaps = natsorted(snaps)
     if n_jobs == 1:
         stats = list(map(get_stats_from_snapshot, snaps))

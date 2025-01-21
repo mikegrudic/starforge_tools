@@ -110,7 +110,7 @@ def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
     return mdot
 
 
-def Q_ionizing(mass, lum=None, radius=None, energy_eV=13.6):
+def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
     """Number of photons with energy > energy_eV emitted per second, assuming blackbody spectrum, to machine precision"""
     if mass is not None and ((lum is None) or (radius is None)):
         lum, radius = luminosity_MS(mass), radius_MS(mass)

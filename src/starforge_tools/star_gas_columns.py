@@ -4,7 +4,7 @@ import numpy as np
 from scipy.spatial import KDTree
 
 
-def star_gas_columns(xstar, xgas, mgas, hgas, sightline_dir=np.array([0, 0, -1.0])):
+def star_gas_columns(xstar, xgas, mgas, hgas, sightline_dir=np.array([0, 0, -1.0]), threads=-1):
     """
     Returns the column density of gas of each star sightline along a specified sightline direction.
 
@@ -21,6 +21,8 @@ def star_gas_columns(xstar, xgas, mgas, hgas, sightline_dir=np.array([0, 0, -1.0
         shape (num_gas,) array of gas kernel lengths
     sightline_dir: array_like, optional
         Shape (3,) array specifying the sightline vector **from the observer to the stars** (default [0,0,-1])
+    threads: int, optional
+        Number of threads to run tree search on (default -1 runs on all available)
 
     Returns
     -------
@@ -45,14 +47,14 @@ def star_gas_columns(xstar, xgas, mgas, hgas, sightline_dir=np.array([0, 0, -1.0
 
     # now make the search tree for stars
     star_tree = KDTree(xstar[:, :2])  # 2D tree
-    gas_ngb_dist, gas_ngb = star_tree.query(xgas[:, :2], workers=-1)
+    gas_ngb_dist, gas_ngb = star_tree.query(xgas[:, :2], workers=threads)
     overlapping_star = (gas_ngb_dist < hgas) * (xstar[gas_ngb, 2] < xgas[:, 2])  # overlaps and in front
 
     # prune gas particles that do not overlap even 1 star
     xgas, mgas, hgas = xgas[overlapping_star], mgas[overlapping_star], hgas.copy()[overlapping_star]
 
     # now need to know every star that a gas particle overlaps
-    ngb = star_tree.query_ball_point(xgas[:, :2], hgas, workers=-1)
+    ngb = star_tree.query_ball_point(xgas[:, :2], hgas, workers=threads)
 
     columns = np.zeros(xstar.shape[0])
     for i, n in enumerate(ngb):

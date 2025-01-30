@@ -1,20 +1,20 @@
-#!/usr/bin/env python
-
-"""                                                                            
+"""
 Generates far-IR images of simulation snapshots that have dust temperature
 information.
 
 Usage: dustemission.py <files> ... [options]
 
-Options:                                                                       
+Options:
    -h --help                   Show this screen.
    --size=<L>                  Image side length in pc (defaults to box size / 5)
    --center=<X,Y>              Center of the image (defaults to box center)
-   --res=<N>                   Resolution of the image [default: 1024]   
+   --res=<N>                   Resolution of the image [default: 1024]
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
-   --output_path               Output path for images (defaults to /dustemission 
-                               directory next to the snapshot)   
-   --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]          
+   --output_path=<path>        Output path for images (defaults to /dustemission 
+                               directory next to the snapshot)
+   --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]
+   --dir=<x,y,z>               Coordinate direction to orient the image along - x, y, or z. 
+                               It also accepts vector values [default: z]
 """
 
 from os import mkdir
@@ -47,18 +47,30 @@ else:
 if options["--output_path"]:
     if not isdir(options["--output_path"]):
         mkdir(options["--output_path"])
-        OUTPATH = options["--output_path"]
+    OUTPATH = options["--output_path"]
 else:
     OUTPATH = None
 NUM_JOBS = int(options["--num_jobs"])
+DIR = options["--dir"]
 
 SOLAR_Z = 0.0142
 
+def transform_coordinates(x, direction):
+    """Transforms coordinates based on the specified direction"""
+    if direction == 'x':
+        return x[:, [1, 2, 0]]
+    elif direction == 'y':
+        return x[:, [0, 2, 1]]
+    elif direction == 'z':
+        return x
+    else:
+        raise ValueError(f"Invalid direction: {direction}")
 
 def make_dustemission_map_from_snapshot(path):
     """Makes a dust emission map from a STARFORGE snapshot"""
     with h5py.File(path, "r") as F:
         x = np.float32(F["PartType0/Coordinates"][:])
+        x = transform_coordinates(x, DIR)
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
         Z = F["PartType0/Metallicity"][:]
@@ -103,9 +115,9 @@ def make_dustemission_map_from_snapshot(path):
         imgpath = OUTPATH + fname
     else:
         outdir = str(pathlib.Path(path).parent.resolve()) + "/dustemission/"
-    if not isdir(outdir):
-        mkdir(outdir)
-    imgpath = outdir + fname
+        if not isdir(outdir):
+            mkdir(outdir)
+        imgpath = outdir + fname
     with h5py.File(imgpath, "w") as F:
         F.create_dataset("Wavelengths_um", data=WAVELENGTHS)
         F.create_dataset("X_pc", data=X)

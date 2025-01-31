@@ -116,7 +116,7 @@ def make_dustemission_map_from_snapshot(path):
 
         if len(WAVELENGTHS) >= 3:
             # fit each pixel to a modified blackbody as an observer would
-            params = modified_blackbody_fit_image(intensity, 0.1*intensity, WAVELENGTHS)
+            params = modified_blackbody_fit_image(intensity, 0.1 * intensity, WAVELENGTHS)
             tau0, beta, Tdust_fit = (
                 params[:, :, 0],
                 params[:, :, 1],
@@ -129,7 +129,7 @@ def make_dustemission_map_from_snapshot(path):
             F.create_dataset("Tdust_massweighted", data=Tdust_avg)
 
             params_avg = modified_blackbody_fit_gaussnewton(
-                intensity.mean((0, 1)), 0.1*intensity.mean((0,1)),WAVELENGTHS
+                intensity.mean((0, 1)), 0.1 * intensity.mean((0, 1)), WAVELENGTHS
             )
 
             tau0, beta, Tdust_fit = params_avg
@@ -141,9 +141,7 @@ def make_dustemission_map_from_snapshot(path):
 
 def main():
     """Runs dust mapping and SED fitting on input snapshots"""
-    Parallel(n_jobs=NUM_JOBS)(
-        delayed(make_dustemission_map_from_snapshot)(f) for f in options["<files>"]
-    )
+    Parallel(n_jobs=NUM_JOBS)(delayed(make_dustemission_map_from_snapshot)(f) for f in options["<files>"])
 
 
 if __name__ == "__main__":

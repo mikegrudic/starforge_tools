@@ -63,12 +63,8 @@ def make_surfdens_map_from_snapshot(path):
     dx = size / (RES - 1)
     h = h.clip(dx, np.inf)
     sigmagas = GridSurfaceDensity(m, x, h, center, size, RES, parallel=True)
-    rho_mass = (
-        GridSurfaceDensity(m * rho, x, h, center, size, RES, parallel=True) / sigmagas
-    )
-    rho_vol = sigmagas / GridSurfaceDensity(
-        m / rho, x, h, center, size, RES, parallel=True
-    )
+    rho_mass = GridSurfaceDensity(m * rho, x, h, center, size, RES, parallel=True) / sigmagas
+    rho_vol = sigmagas / GridSurfaceDensity(m / rho, x, h, center, size, RES, parallel=True)
     X = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[0]
     Y = np.linspace(dx / 2 - size / 2, size / 2 - dx / 2, RES) + center[1]
     X, Y = np.meshgrid(X, Y)
@@ -92,9 +88,7 @@ def make_surfdens_map_from_snapshot(path):
 
 def main():
     """Runs surface density mapping on input snapshots"""
-    Parallel(n_jobs=NUM_JOBS)(
-        delayed(make_surfdens_map_from_snapshot)(f) for f in options["<files>"]
-    )
+    Parallel(n_jobs=NUM_JOBS)(delayed(make_surfdens_map_from_snapshot)(f) for f in options["<files>"])
 
 
 if __name__ == "__main__":

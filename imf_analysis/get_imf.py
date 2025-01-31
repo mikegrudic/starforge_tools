@@ -8,13 +8,15 @@ from simple_powerlaw_fit import simple_powerlaw_fit
 from os.path import abspath
 from joblib import Parallel, delayed
 
-def get_imf(run): # give the output folders of the runs you want to look at
+
+def get_imf(run):  # give the output folders of the runs you want to look at
     print(run)
     zams_mass_dict = {}
     t0_dict = {}
     snaps = glob(run + "/snapshot_*.hdf5")
     for s in snaps:
-        if "stars" in s: continue
+        if "stars" in s:
+            continue
         try:
             with h5py.File(s, "r") as F:
                 if not "PartType5" in F.keys():
@@ -28,7 +30,7 @@ def get_imf(run): # give the output folders of the runs you want to look at
                         zams_mass_dict[star_id] = star_mass
                         t0_dict[star_id] = t
                     else:
-                        zams_mass_dict[star_id] = max(star_mass, zams_mass_dict[star_id]) 
+                        zams_mass_dict[star_id] = max(star_mass, zams_mass_dict[star_id])
                         t0_dict[star_id] = min(t, t0_dict[star_id])
         except:
             print(f"Could not open {s}")
@@ -66,9 +68,7 @@ def get_imf(run): # give the output folders of the runs you want to look at
     masses = np.array([zams_mass_dict[i] for i in zams_mass_dict.keys()])
     header += "SFE: %g\n" % (masses.sum() / M)
     if len(masses) > 10:
-        alpha_lower, alpha_med, alpha_upper = simple_powerlaw_fit(
-            masses, xmin=1, xmax=10
-        )
+        alpha_lower, alpha_med, alpha_upper = simple_powerlaw_fit(masses, xmin=1, xmax=10)
         header += "IMF params: %g %g %g %g\n" % (
             alpha_lower,
             alpha_med,
@@ -99,7 +99,8 @@ def get_imf(run): # give the output folders of the runs you want to look at
         header=header,
     )
 
+
 paths = [abspath(a) for a in argv[1:]]
 
-#[]
+# []
 Parallel(n_jobs=32)(delayed(get_imf)(a) for a in paths)

@@ -46,9 +46,7 @@ def GetPowerSpectrum(grid, res):
     intk = intkSqr**0.5
     kbins = np.arange(intk.max()) * (1 + 1e-15)
 
-    power_in_bin = binned_statistic(
-        intk.flatten(), vkSqr.flatten(), bins=kbins, statistic="sum"
-    )[0]
+    power_in_bin = binned_statistic(intk.flatten(), vkSqr.flatten(), bins=kbins, statistic="sum")[0]
     power_spectrum = power_in_bin / np.diff(kbins)  # power density in k space
     power_spectrum[power_spectrum == 0] = np.nan
     return kbins[1:], power_spectrum

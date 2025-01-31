@@ -79,14 +79,9 @@ for f in snapshot_paths:
         if options["--pos"] == "COM":
             xstar = np.average(Fstar["PartType0/Coordinates"][:], axis=0)
         elif options["--pos"] == "densest":
-            xstar = Fstar["PartType0/Coordinates"][:][
-                Fstar["PartType0/Density"][:].argmax()
-            ]
+            xstar = Fstar["PartType0/Coordinates"][:][Fstar["PartType0/Density"][:].argmax()]
         else:
-            xstar = (
-                np.array([float(s) for s in options["--pos"].split(",")])
-                + 0.5 * boxsize
-            )
+            xstar = np.array([float(s) for s in options["--pos"].split(",")]) + 0.5 * boxsize
 
         dist = cdist(Fstar["PartType0/Coordinates"][:], [xstar]).flatten()
         closest = dist.argmin()
@@ -96,24 +91,16 @@ for f in snapshot_paths:
             vstar = F["PartType0/Velocities"][:][closest]
         else:
             vstar = np.array(
-                [
-                    float(s) * 1e5 / F["Header"].attrs["UnitVelocity_In_CGS"]
-                    for s in options["--v"].split(",")
-                ]
+                [float(s) * 1e5 / F["Header"].attrs["UnitVelocity_In_CGS"] for s in options["--v"].split(",")]
             )
 
         age = (
             float(options["--age"])
             * 3.1541e13
-            / (
-                F["Header"].attrs["UnitLength_In_CGS"]
-                / F["Header"].attrs["UnitVelocity_In_CGS"]
-            )
+            / (F["Header"].attrs["UnitLength_In_CGS"] / F["Header"].attrs["UnitVelocity_In_CGS"])
         )
 
-        Fstar["PartType5"].create_dataset(
-            "ParticleIDs", data=[F["PartType0/ParticleIDs"][:].max() + 1]
-        )
+        Fstar["PartType5"].create_dataset("ParticleIDs", data=[F["PartType0/ParticleIDs"][:].max() + 1])
         Fstar["PartType5"].create_dataset("Coordinates", data=[xstar])
         Fstar["PartType5"].create_dataset("Velocities", data=[vstar])
         Fstar["PartType5"].create_dataset("Masses", data=[M])
@@ -128,27 +115,17 @@ for f in snapshot_paths:
         Fstar["PartType5"].create_dataset("ParticleChildIDsNumber", data=[0])
         Fstar["PartType5"].create_dataset("BH_Specific_AngMom", data=[[0, 0, 0]])
         Fstar["PartType5"].create_dataset("BH_AccretionLength", data=[hsml])
-        Fstar["PartType5"].create_dataset(
-            "Metallicity", data=Fstar["PartType0/Metallicity"][:1]
-        )
+        Fstar["PartType5"].create_dataset("Metallicity", data=Fstar["PartType0/Metallicity"][:1])
         Fstar["PartType5"].create_dataset(
             "SinkRadius",
             data=[F["Header"].attrs["Fixed_ForceSoftening_Keplerian_Kernel_Extent"][5]],
         )
         Fstar["PartType5"].create_dataset("ProtoStellarStage", data=[5])
         Fstar["PartType5"].create_dataset("ProtoStellarAge", data=[age])
-        Fstar["PartType5"].create_dataset(
-            "StarLuminosity_Solar", data=luminosity_tout(M)
-        )
-        Fstar["PartType5"].create_dataset(
-            "ProtoStellarRadius_inSolar", data=radius_tout(M)
-        )
-        Fstar["PartType5"].create_dataset(
-            "SinkInitialMass", data=[F["PartType0/Masses"][:].mean()]
-        )
-        Fstar["PartType5"].create_dataset(
-            "StellarFormationTime", data=[Fstar["Header"].attrs["Time"] - age]
-        )
+        Fstar["PartType5"].create_dataset("StarLuminosity_Solar", data=luminosity_tout(M))
+        Fstar["PartType5"].create_dataset("ProtoStellarRadius_inSolar", data=radius_tout(M))
+        Fstar["PartType5"].create_dataset("SinkInitialMass", data=[F["PartType0/Masses"][:].mean()])
+        Fstar["PartType5"].create_dataset("StellarFormationTime", data=[Fstar["Header"].attrs["Time"] - age])
         (Fstar["Header"].attrs).modify("NumPart_ThisFile", [Ngas, 0, 0, 0, 0, 1])
         (Fstar["Header"].attrs).modify("NumPart_Total", [Ngas, 0, 0, 0, 0, 1])
         (Fstar["Header"].attrs).modify("Time", 0)

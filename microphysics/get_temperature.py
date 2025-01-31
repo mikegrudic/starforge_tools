@@ -45,20 +45,13 @@ def get_temperature(
         f_di = fH * f / 2.0
         gamma_mono = 5.0 / 3.0
         gamma_di = 7.0 / 5.0
-        gamma_eff = 1.0 + (f_mono + f_di) / (
-            f_mono / (gamma_mono - 1.0) + f_di / (gamma_di - 1.0)
-        )
+        gamma_eff = 1.0 + (f_mono + f_di) / (f_mono / (gamma_mono - 1.0) + f_di / (gamma_di - 1.0))
         A0 = m_proton * (gamma_eff - 1.0) * internal_egy_cgs / kB
     else:
         fmol = 0
         if 2 == 2:
             for i in range(3):
-                mu = 1.0 / (
-                    X * (1.0 - 0.5 * fmol)
-                    + Y / 4.0
-                    + nel * X0
-                    + Z / (16.0 + 12.0 * fmol)
-                )
+                mu = 1.0 / (X * (1.0 - 0.5 * fmol) + Y / 4.0 + nel * X0 + Z / (16.0 + 12.0 * fmol))
                 T = mu * A0 / T_mol
                 fmol = 1.0 / (1.0 + T * T)
     mu = 1.0 / (X * (1.0 - 0.5 * fmol) + Y / 4.0 + nel * X0 + Z / (16.0 + 12.0 * fmol))

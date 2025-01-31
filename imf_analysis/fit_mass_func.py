@@ -30,12 +30,7 @@ def massfunc_chabrier(m, log_mpeak, sigma, alpha):
     mbreak = 1.0
     mpeak = 10**log_mpeak
     if m > mbreak:
-        massfunc = (
-            1
-            / mbreak
-            * np.exp(-np.log10(mbreak / mpeak) ** 2 / (2 * sigma**2))
-            * (m / mbreak) ** alpha
-        )
+        massfunc = 1 / mbreak * np.exp(-np.log10(mbreak / mpeak) ** 2 / (2 * sigma**2)) * (m / mbreak) ** alpha
     else:
         massfunc = 1 / m * np.exp(-np.log10(m / mpeak) ** 2 / (2 * sigma**2))
     return massfunc
@@ -74,9 +69,7 @@ def FitMassFunction(
             mch, gamma, alpha = x
             massfunc_norm = np.trapz(func(mgrid, mch, gamma, alpha), mgrid)
             massfunc_vals = func(mstar, mch, gamma, alpha) / massfunc_norm
-            if np.any(np.isnan(np.log(massfunc_vals))) or np.any(
-                np.isinf(np.log(massfunc_vals))
-            ):
+            if np.any(np.isnan(np.log(massfunc_vals))) or np.any(np.isinf(np.log(massfunc_vals))):
                 return -np.inf  # 0 likelihood for erroneous values
             return np.sum(
                 np.log(massfunc_vals)
@@ -108,9 +101,7 @@ def FitMassFunction(
             massfunc_norm = 1 / np.trapz(f, mgrid)
             #            print(np.trapz(f*massfunc_norm * mgrid, mgrid))
             massfunc_vals = func(mstar, mpeak, sigma, alpha) * massfunc_norm
-            if np.any(np.isnan(np.log(massfunc_vals))) or np.any(
-                np.isinf(np.log(massfunc_vals))
-            ):
+            if np.any(np.isnan(np.log(massfunc_vals))) or np.any(np.isinf(np.log(massfunc_vals))):
                 return -np.inf  # 0 likelihood for erroneous values
             return np.sum(
                 np.log(massfunc_vals)
@@ -119,9 +110,7 @@ def FitMassFunction(
     sampler = emcee.EnsembleSampler(nwalkers, ndim, log_prob, args=[masses])
     sampler.run_mcmc(p0, chainlength, progress=True)
 
-    samples = sampler.get_chain(
-        discard=burnin, flat=True
-    )  # throw out the first 1000 as burnin
+    samples = sampler.get_chain(discard=burnin, flat=True)  # throw out the first 1000 as burnin
     if return_samples:
         return samples
     else:

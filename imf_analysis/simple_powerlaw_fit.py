@@ -2,14 +2,7 @@ import numpy as np
 
 
 def simple_powerlaw_fit(
-    data,
-    xmin=None,
-    xmax=None,
-    Ngrid=1024,
-    alpha_min=-4,
-    alpha_max=4,
-    quantiles=[0.16, 0.5, 0.84],
-    return_grid=False
+    data, xmin=None, xmax=None, Ngrid=1024, alpha_min=-4, alpha_max=4, quantiles=[0.16, 0.5, 0.84], return_grid=False
 ):
     """Computes the specified quantiles of the posterior distribution of the power law slope alpha, given a dataset and desired quantiles
 
@@ -25,12 +18,8 @@ def simple_powerlaw_fit(
         xmax = data.max()
     data = data[(data > xmin) * (data < xmax)]  # prune data to specified limits
 
-    alpha_grid = np.linspace(
-        alpha_min, alpha_max, Ngrid
-    )  # initialize the 1D grid in parameter space
-    lnprob = np.zeros_like(
-        alpha_grid
-    )  # grid that stores the values of the posterior distribution
+    alpha_grid = np.linspace(alpha_min, alpha_max, Ngrid)  # initialize the 1D grid in parameter space
+    lnprob = np.zeros_like(alpha_grid)  # grid that stores the values of the posterior distribution
 
     normgrid = (1 + alpha_grid) / (
         xmax ** (1 + alpha_grid) - xmin ** (1 + alpha_grid)

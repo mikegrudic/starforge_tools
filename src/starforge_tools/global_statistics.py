@@ -3,9 +3,10 @@
 from os.path import isfile
 from glob import glob
 import numpy as np
-import h5py
+import h5pickle as h5py
 from astropy import units as u, constants as c
-from joblib import Parallel, delayed
+from joblib import Parallel, delayed, wrap_non_picklable_objects
+from multiprocessing import Pool
 from natsort import natsorted
 from astropy.table import QTable
 from starforge_tools.star_properties import Q_ionizing, wind_mdot, vwind
@@ -34,6 +35,9 @@ class GlobalStatistics:
                 setattr(self, datafield, getattr(self, f)())  # call the getter function
                 if datafield != "units":
                     self.stored_datafields.append(datafield)
+
+        del self.snapfile
+        del self.header
 
     def get_units(self):
         """Returns a dict specifying the units system of the snapshot"""
@@ -93,17 +97,20 @@ class GlobalStatistics:
             return Lwind_cgs.sum()
         return 0 * u.erg / u.s
 
-    def get_time_myr(self):
+    def get_time(self):
         """Returns the snapshot time in Myr"""
         unit_dict = self.get_units()
         return (self.header["Time"] * unit_dict["UnitTime_In_CGS"] * u.second).to(u.Myr)
 
 
+# @delayed
+# @wrap_non_picklable_objects
 def get_stats_from_snapshot(snappath, stats_to_compute=None):
     print(snappath)
     """Returns a global statistics instance containing computed global statistics"""
     with h5py.File(snappath, "r") as f:
-        return GlobalStatistics(f, stats_to_compute)
+        stats = GlobalStatistics(f, stats_to_compute)
+    return stats
 
 
 def statslist_to_table(statslist):
@@ -121,9 +128,10 @@ def statslist_to_table(statslist):
 
 def get_globalstats_of_simulation(rundir, stats_to_compute=None, n_jobs=-1, overwrite=False, stars_only_snaps=True):
     """Does a pass over all snapshots to compute desired global statistics"""
-    datafile_path = rundir + "/global_statistics.dat"
+    datafile_path = rundir + "/global_statistics.fits"
+    format = "fits"
     if isfile(datafile_path) and not overwrite:
-        tab = Table.read(datafile_path, format="ascii.basic")
+        tab = Table.read(datafile_path, format=format)  # , format="ascii.basic")
         if stats_to_compute is not None:
             if set(stats_to_compute).intersection(tab.keys()) == stats_to_compute:
                 return tab
@@ -137,10 +145,11 @@ def get_globalstats_of_simulation(rundir, stats_to_compute=None, n_jobs=-1, over
     if n_jobs == 1:
         stats = list(map(get_stats_from_snapshot, snaps))
     else:
-        stats = Parallel(n_jobs=n_jobs, backend="threading")(
-            delayed(get_stats_from_snapshot)(s, stats_to_compute) for s in snaps
-        )
+        #        stats = Pool().starmap(get_stats_from_snapshot, zip(snaps, len(snaps) * [stats_to_compute]))
+        stats = Parallel(n_jobs=n_jobs)(delayed(get_stats_from_snapshot)(s, stats_to_compute) for s in snaps)
     # ok now convert to table format
+    #    print(stats)
     tab = statslist_to_table(stats)
-    tab.write(datafile_path, overwrite=True, format="fits")
+    tab = tab[tab["time"].argsort()]
+    tab.write(datafile_path, overwrite=True, format=format)
     return tab

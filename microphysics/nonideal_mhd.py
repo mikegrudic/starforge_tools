@@ -55,11 +55,7 @@ def nonideal_mhd_coefficients(F, a_grain_micron=0.1):
     # UNIT_B_IN_GAUSS = np.sqrt(4.0 * np.pi * UNIT_PRESSURE_IN_CGS)
 
     UNIT_DENSITY_IN_CGS = M_unit / L_unit**3
-    rho = (
-        F["PartType0/Density"][:]
-        * (F["Header"].attrs["HubbleParam"] ** -3)
-        * UNIT_DENSITY_IN_CGS
-    )
+    rho = F["PartType0/Density"][:] * (F["Header"].attrs["HubbleParam"] ** -3) * UNIT_DENSITY_IN_CGS
     n_eff = np.float64(rho) / PROTONMASS_CGS  # density in cgs
     # calculate ionization fraction in dense gas use rate coefficients k to estimate grain charge
     # prefactor for rate coefficient for electron-grain collisions
@@ -93,9 +89,7 @@ def nonideal_mhd_coefficients(F, a_grain_micron=0.1):
     ###### end approximations for when we don't know ionization
 
     mu_eff = 2.38
-    x_elec = (F["PartType0/ElectronAbundance"][:] * HYDROGEN_MASSFRAC * mu_eff).clip(
-        1e-18, 1e100
-    )
+    x_elec = (F["PartType0/ElectronAbundance"][:] * HYDROGEN_MASSFRAC * mu_eff).clip(1e-18, 1e100)
     R = x_elec * psi_prefac / ngr_ngas
     # return R
     psi_0 = -3.787124454911839
@@ -119,9 +113,7 @@ def nonideal_mhd_coefficients(F, a_grain_micron=0.1):
     xg = ngr_ngas
     # get collision rates/cross sections for different species #
     # Pinto & Galli 2008
-    nu_g = (
-        7.90e-6 * ag01 * ag01 * np.sqrt(temperature / m_neutral) / (m_neutral + m_grain)
-    )
+    nu_g = 7.90e-6 * ag01 * ag01 * np.sqrt(temperature / m_neutral) / (m_neutral + m_grain)
     nu_ei = 51.0 * xe * np.power(temperature, -1.5)  # Pandey & Wardle 2008 (e-ion)
     # Pinto & Galli 2008 for latter (e-neutral)
     nu_e = nu_ei + 6.21e-9 * np.power(temperature / 100.0, 0.65) / m_neutral
@@ -142,11 +134,7 @@ def nonideal_mhd_coefficients(F, a_grain_micron=0.1):
     sigma_O = xe * beta_e + xi * beta_i + xg * np.abs(Z_grain) * beta_g
     sigma_H = -xe * be_inv + xi * bi_inv + xg * Z_grain * bg_inv  # hall conductivity
     # pedersen conductivity
-    sigma_P = (
-        xe * beta_e * be_inv
-        + xi * beta_i * bi_inv
-        + xg * np.abs(Z_grain) * beta_g * bg_inv
-    )
+    sigma_P = xe * beta_e * be_inv + xi * beta_i * bi_inv + xg * np.abs(Z_grain) * beta_g * bg_inv
     sign_Zgrain = Z_grain / np.abs(Z_grain)
     sign_Zgrain[Z_grain == 0] = 0
     # alternative formulation which is automatically positive-definite

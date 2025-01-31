@@ -115,7 +115,7 @@ def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
     if mass is not None and ((lum is None) or (radius is None)):
         lum, radius = luminosity_MS(mass).clip(1e-10), radius_MS(mass)
 
-    T_eff = effective_temperature(mass, lum, radius)
+    T_eff = effective_temperature(mass, lum, radius).clip(1e-10)
     k_B = 8.617e-5  # in eV/K
     x1 = energy_eV / (k_B * T_eff)
     Lsun_cgs = 2.389e45

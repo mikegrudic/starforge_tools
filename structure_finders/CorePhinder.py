@@ -80,9 +80,7 @@ def KE(c, x, m, h, v, u):
 
 
 def PE(c, x, m, h, v, u):
-    phic = pytreegrav.Potential(
-        x[c], m[c], h[c], G=4.3007e3, theta=0.7, parallel=pytreegrav_parallel
-    )
+    phic = pytreegrav.Potential(x[c], m[c], h[c], G=4.3007e3, theta=0.7, parallel=pytreegrav_parallel)
     return 0.5 * (phic * m[c]).sum()
 
 
@@ -161,9 +159,7 @@ def EnergyIncrement(i, m, M, x, v, u, h, v_com, tree=None, particles_not_in_tree
         xa = arr[:, :3]  # np.take(x, particles_not_in_tree_a,axis=0)
         ma = arr[:, 3]  # np.take(m, particles_not_in_tree_a)
         ha = arr[:, 4]  # np.take(h, particles_not_in_tree_a)
-        phi += pytreegrav.PotentialTarget(
-            xtarget, xa, ma, h_source=ha, G=4.3007e3, parallel=pytreegrav_parallel
-        )[0]
+        phi += pytreegrav.PotentialTarget(xtarget, xa, ma, h_source=ha, G=4.3007e3, parallel=pytreegrav_parallel)[0]
     if tree:
         phi += (
             4.3007e3
@@ -203,12 +199,8 @@ def PE_Increment(i, c, m, x, v, u, v_com):
 
 ######## Grouping functions ########
 # @profile
-def ParticleGroups(
-    x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, rmax=1e100
-):
-    ngbdist, ngb = cKDTree(x).query(
-        x, min(cluster_ngb, len(x)), distance_upper_bound=min(rmax, h.max())
-    )
+def ParticleGroups(x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb=32, rmax=1e100):
+    ngbdist, ngb = cKDTree(x).query(x, min(cluster_ngb, len(x)), distance_upper_bound=min(rmax, h.max()))
 
     max_group_size = 0
     groups = {}
@@ -249,9 +241,7 @@ def ParticleGroups(
             v_COM[i] = v[i]
             COM[i] = x[i]
             masses[i] = m[i]
-            particles_since_last_tree[i] = np.array(
-                [[x[i, 0], x[i, 1], x[i, 2], m[i], h[i]]]
-            )
+            particles_since_last_tree[i] = np.array([[x[i, 0], x[i, 1], x[i, 2], m[i], h[i]]])
             alpha_vir[i] = 1e100
             num_crossings[i] = 0
             continue
@@ -266,31 +256,22 @@ def ParticleGroups(
             ndenser = 0
 
         add_to_existing_group = False
-        if (
-            ndenser == 0
-        ):  # if this is the densest particle in the kernel, let's create our own group
+        if ndenser == 0:  # if this is the densest particle in the kernel, let's create our own group
             groups[i] = [
                 i,
             ]
             group_tree[i] = None
             assigned_group[i] = i
-            group_energy[i] = (
-                m[i] * u[i]
-            )  # - 2.8*m[i]**2/h[i] / 2 # kinetic + potential energy
+            group_energy[i] = m[i] * u[i]  # - 2.8*m[i]**2/h[i] / 2 # kinetic + potential energy
             group_KE[i] = m[i] * u[i]
             v_COM[i] = v[i]
             COM[i] = x[i]
             masses[i] = m[i]
             alpha_vir[i] = 1e100
-            particles_since_last_tree[i] = np.array(
-                [[x[i, 0], x[i, 1], x[i, 2], m[i], h[i]]]
-            )
+            particles_since_last_tree[i] = np.array([[x[i, 0], x[i, 1], x[i, 2], m[i], h[i]]])
             num_crossings[i] = 0
         # if there is only one denser particle, or both of the nearest two denser ones belong to the same group, we belong to that group too
-        elif (
-            ndenser == 1
-            or assigned_group[ngb_denser[0]] == assigned_group[ngb_denser[1]]
-        ):
+        elif ndenser == 1 or assigned_group[ngb_denser[0]] == assigned_group[ngb_denser[1]]:
             assigned_group[i] = assigned_group[ngb_denser[0]]
             groups[assigned_group[i]].append(i)
             add_to_existing_group = True
@@ -316,15 +297,12 @@ def ParticleGroups(
 
                 group_energy[group_index_a] += group_energy[group_index_b]
                 group_KE[group_index_a] += group_KE[group_index_b]
-                group_KE[group_index_a] += (
-                    0.5 * ma * mb / (ma + mb) * np.sum((va - vb) ** 2)
-                )
+                group_KE[group_index_a] += 0.5 * ma * mb / (ma + mb) * np.sum((va - vb) ** 2)
                 group_energy[group_index_a] += (
                     0.5 * ma * mb / (ma + mb) * np.sum((va - vb) ** 2)
                 )  # energy due to relative motion: 1/2 * mu * dv^2
                 if (
-                    num_crossings[group_index_a] + num_crossings[group_index_b]
-                    <= max_num_crossings
+                    num_crossings[group_index_a] + num_crossings[group_index_b] <= max_num_crossings
                 ):  # only need to keep track of energy if we are <= max_num_crossings
                     # mutual interaction energy; we've already counted their individual binding energies
                     group_energy[group_index_a] += InteractionEnergy(
@@ -380,9 +358,7 @@ def ParticleGroups(
                 COM[group_index_a] = (ma * xa + mb * xb) / (ma + mb)
                 v_COM[group_index_a] = (ma * va + mb * vb) / (ma + mb)
                 masses[group_index_a] = ma + mb
-                num_crossings[group_index_a] = (
-                    num_crossings[group_index_a] + num_crossings[group_index_b]
-                )
+                num_crossings[group_index_a] = num_crossings[group_index_a] + num_crossings[group_index_b]
                 groups.pop(group_index_b, None)
                 assigned_group[i] = group_index_a
                 assigned_group[assigned_group == group_index_b] = group_index_a
@@ -391,19 +367,13 @@ def ParticleGroups(
                 # if this new group is bound, we can delete the old bound group
                 if num_crossings[group_index_a] <= max_num_crossings:
                     avir = abs(
-                        2
-                        * group_KE[group_index_a]
-                        / np.abs(group_energy[group_index_a] - group_KE[group_index_a])
+                        2 * group_KE[group_index_a] / np.abs(group_energy[group_index_a] - group_KE[group_index_a])
                     )
                 else:
                     avir = 1e100
                 alpha_vir[group_index_a] = avir
 
-                if (
-                    avir_old > alpha_crit
-                    and avir < alpha_crit
-                    and len(group_ab) > cluster_ngb
-                ):
+                if avir_old > alpha_crit and avir < alpha_crit and len(group_ab) > cluster_ngb:
                     num_crossings[group_index_a] += 1
                 if avir < alpha_crit and num_crossings[g] <= max_num_crossings:
                     largest_assigned_group[group_ab] = len(group_ab)
@@ -450,11 +420,7 @@ def ParticleGroups(
             else:
                 avir = 1e100
             alpha_vir[g] = avir
-            if (
-                avir_old > alpha_crit
-                and avir < alpha_crit
-                and len(groups[g]) > cluster_ngb
-            ):
+            if avir_old > alpha_crit and avir < alpha_crit and len(groups[g]) > cluster_ngb:
                 num_crossings[g] += 1
             if avir < alpha_crit and num_crossings[g] <= max_num_crossings:
                 largest_assigned_group[i] = len(groups[g])
@@ -468,10 +434,7 @@ def ParticleGroups(
                     np.array([x[i, 0], x[i, 1], x[i, 2], m[i], h[i]]),
                 )
             )
-            if (
-                len(particles_since_last_tree[g]) > ntree
-                and num_crossings[g] <= max_num_crossings
-            ):
+            if len(particles_since_last_tree[g]) > ntree and num_crossings[g] <= max_num_crossings:
                 gg = groups[g]
                 xtree = np.take(x, groups[g], axis=0)
                 mtree = np.take(m, groups[g])
@@ -598,12 +561,8 @@ def ComputeClouds(filename, options):
     groups, bound_groups, assigned_group = ParticleGroups(
         x, m, rho, h, u, v, nmin, ntree, alpha_crit, cluster_ngb
     )  #: ParticleGroups(x, m, rho, h, u, v, ngb, ngbdist,des_ngb=cluster_ngb)
-    groupmass = np.array(
-        [m[c].sum() for c in list(bound_groups.values()) if len(c) > 10]
-    )
-    groupid = np.array(
-        [c for c in list(bound_groups.keys()) if len(bound_groups[c]) > 10]
-    )
+    groupmass = np.array([m[c].sum() for c in list(bound_groups.values()) if len(c) > 10])
+    groupid = np.array([c for c in list(bound_groups.keys()) if len(bound_groups[c]) > 10])
     groupid = groupid[groupmass.argsort()[::-1]]
     bound_groups = OrderedDict(list(zip(groupid, [bound_groups[i] for i in groupid])))
     #    exit()
@@ -687,9 +646,7 @@ def ComputeClouds(filename, options):
 
     # now save the ascii data files
     SaveArrayDict(
-        outdir
-        + "/Cores_%s_n%g_a%g_B%d_u%d.dat"
-        % (n, nmin, alpha_crit, not ignore_B, not ignore_thermal),
+        outdir + "/Cores_%s_n%g_a%g_B%d_u%d.dat" % (n, nmin, alpha_crit, not ignore_B, not ignore_thermal),
         bound_data,
     )
 

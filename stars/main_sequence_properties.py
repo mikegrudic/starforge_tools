@@ -1,4 +1,5 @@
 """Main-sequence stellar properties derived from Tout 1996 formulae and STARFORGE wind and feedback prescriptions"""
+
 import numpy as np
 from special_functions import planck2_integral, planck3_integral
 
@@ -74,9 +75,7 @@ def Q_ionizing_approx(mass, energy_eV=13.6):
     k_B = 8.617e-5
     x1 = energy_eV / (k_B * T_eff)
     ionizing_frac = ionizing_frac_approx(x1)
-    return (
-        ionizing_frac * L * 1.7e44 / (1 + 3 / x1 - 2 * (1 + x1) / (2 + x1 * (2 + x1)))
-    )
+    return ionizing_frac * L * 1.7e44 / (1 + 3 / x1 - 2 * (1 + x1) / (2 + x1 * (2 + x1)))
 
 
 def ionizing_frac_approx(x1):
@@ -84,15 +83,14 @@ def ionizing_frac_approx(x1):
     result = np.empty_like(x1)
     result[x1 < 2.710528524106676] = (
         1
-        - (
-            (131.4045728599595 * x1 * x1 * x1)
-            / (2560.0 + x1 * (960.0 + x1 * (232.0 + 39.0 * x1)))
-        )[x1 < 2.710528524106676]
+        - ((131.4045728599595 * x1 * x1 * x1) / (2560.0 + x1 * (960.0 + x1 * (232.0 + 39.0 * x1))))[
+            x1 < 2.710528524106676
+        ]
     )
     # approximation of integral of Planck function from 0 to x1, valid for x1 << 1 \
-    result[x1 >= 2.710528524106676] = (
-        (0.15398973382026504 * (6.0 + x1 * (6.0 + x1 * (3.0 + x1)))) * np.exp(-x1)
-    )[x1 >= 2.710528524106676]
+    result[x1 >= 2.710528524106676] = ((0.15398973382026504 * (6.0 + x1 * (6.0 + x1 * (3.0 + x1)))) * np.exp(-x1))[
+        x1 >= 2.710528524106676
+    ]
     # approximation of Planck integral for large x
     return result
 

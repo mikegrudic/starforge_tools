@@ -1,25 +1,28 @@
 #!/usr/bin/env python
-import numpy as np
-from matplotlib import pyplot as plt
+"""
+Generates a GIZMO HDF5 initial conditions file consisting a binary system of unit mass and semimajor axis
+and arbitrary eccentricity and mass ratio, in units where G=1
 
-# from scipy.optimize import brentq
+Usage:
+./binary.py <eccentricity> <mass ratio>
+"""
+import numpy as np
 import h5py
 from sys import argv
 
-e = argv[1]
+ecc = float(argv[1])
+mass_ratio = float(argv[2])
+m1 = 1 / (1 + mass_ratio)
+m2 = 1 - m1
 
-x = np.array([[-0.1, 0, 0], [0.9, 0, 0]])
-m = np.array([0.9, 0.1])
-v = (1 - e) ** 0.5 * np.array([[0.0, 0.1, 0], [0, -0.9, 0]])  #  - 2*x
-print(x)
-
-# v = np.c_[v*np.cos(phi_v)*np.sin(theta_v), v*np.sin(phi_v)*np.sin(theta_v), v*np.cos(theta_v)]
+x = np.array([[-m2, 0, 0], [m1, 0, 0]])
+m = np.array([m1, m2])
+v = (1 - ecc) ** 0.5 * np.array([[0.0, m2, 0], [0, -m1, 0]])
 boxsize = 10.0
-F = h5py.File("e%g.hdf5" % e)
+F = h5py.File("e%g.hdf5" % ecc, "w")
 F.create_group("PartType5")
 F.create_group("Header")
 F["Header"].attrs["NumPart_ThisFile"] = [0, 0, 0, 0, 0, len(x)]
-# F["Header"].attrs["MassTable"] = [0,0,0,0,0,1./len(m)]
 F["Header"].attrs["BoxSize"] = boxsize
 F["Header"].attrs["Time"] = 0.0
 F["PartType5"].create_dataset("Coordinates", data=x + boxsize / 2)

@@ -1,6 +1,13 @@
 #!/usr/bin/env python
+
+"""
+Generates a GIZMO initial conditions HDF5 file realizing a Plummer model in units where G=1
+
+Usage:
+./plummer.py <number of particles> <total mass> <scale radius>
+"""
+
 import numpy as np
-from matplotlib import pyplot as plt
 from scipy.optimize import brentq
 import h5py
 
@@ -22,7 +29,6 @@ else:
     a = 1.0
 
 x = np.arange(0, 1, 1.0 / N) + np.random.rand(N) / N
-print(x.max())
 r = np.sqrt(x ** (2.0 / 3) * (1 + x ** (2.0 / 3) + x ** (4.0 / 3)) / (1 - x**2))
 phi = np.random.rand(N) * 2 * np.pi
 theta = np.arccos(2.0 * np.random.rand(N) - 1.0)
@@ -32,23 +38,22 @@ x = np.c_[r * np.cos(phi) * np.sin(theta), r * np.sin(phi) * np.sin(theta), r * 
 phi = -((1 + r**2) ** -0.5)
 v_e = (-2 * phi) ** 0.5
 
-cdf = (
-    lambda Rp, rr: (
+
+def cdf(Rp, rr):
+    """CDF of velocity distribution"""
+    return (
         2
         * (
             Rp * np.sqrt(1 - Rp**2) * (-105 + 1210 * Rp**2 - 2104 * Rp**4 + 1488 * Rp**6 - 384 * Rp**8)
             + 105 * np.arcsin(Rp)
         )
-    )
-    / (105.0 * np.pi)
-    - rr
-)
+    ) / (105.0 * np.pi) - rr
+
 
 Qs = np.array([brentq(cdf, 0, 1, args=(R,)) for R in np.random.rand(N)])
 
 v = v_e * Qs
 
-print(np.sum(v**2 / 2 / N), np.sum(phi) / 2 / N)
 phi_v = np.random.rand(N) * 2 * np.pi
 theta_v = np.arccos(2.0 * np.random.rand(N) - 1.0)
 

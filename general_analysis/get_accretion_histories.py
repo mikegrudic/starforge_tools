@@ -10,7 +10,7 @@ mmax = 100
 
 for run in argv[1:]:
     mdict = {}
-    files = sorted(glob(run + "/snapshot*.hdf5")) #+ glob(run + "/stars_only/*.hdf5"))
+    files = sorted(glob(run + "/snapshot*.hdf5"))  # + glob(run + "/stars_only/*.hdf5"))
     for f in files:
         print(f)
         with h5py.File(f, "r") as F:
@@ -20,7 +20,7 @@ for run in argv[1:]:
             ids = F["PartType5/ParticleIDs"][:]
             mstar = F["PartType5/BH_Mass"][:]
             msink = F["PartType5/Masses"][:]
-            for i, m, ms in zip(ids, mstar,msink):
+            for i, m, ms in zip(ids, mstar, msink):
                 if i in mdict.keys():
                     mdict[i].append([t, m, ms])
                 else:

@@ -89,12 +89,12 @@ SN_details_STARFORGE
 ^^^^^^^^^^^^^^^^^^^^
 
 ::
-  (0) Time
-  (1) ID
-  (2) Mass
-  (3) X
-  (4) Y
-  (5) Z    
-  (6) VX
-  (7) VY
-  (8) VZ
+    (0) Time
+    (1) ID
+    (2) Mass
+    (3) X
+    (4) Y
+    (5) Z    
+    (6) VX
+    (7) VY
+    (8) VZ

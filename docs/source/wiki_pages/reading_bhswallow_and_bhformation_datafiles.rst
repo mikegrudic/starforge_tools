@@ -83,18 +83,20 @@ bhformation
    (18) min dist to nearest star
 
 
-SN_details_STARFORGE.txt records each supernova event.
+
 
 SN_details_STARFORGE
 ^^^^^^^^^^^^^^^^^^^^
+SN_details_STARFORGE.txt records each supernova event.
 
 ::
-    (0) Time
-    (1) ID
-    (2) Mass
-    (3) X
-    (4) Y
-    (5) Z    
-    (6) VX
-    (7) VY
-    (8) VZ
+
+   (0) Time
+   (1) ID
+   (2) Mass
+   (3) X
+   (4) Y
+   (5) Z
+   (6) vx
+   (7) vy
+   (8) vz

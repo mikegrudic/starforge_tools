@@ -81,3 +81,14 @@ bhformation
    (16) column density
    (17) velocity gradient^2
    (18) min dist to nearest star
+
+
+SN_details_STARFORGE
+^^^^^^^^^^^^^^^^^^^^
+
+::
+  (0) Time
+  (1) ID
+  (2) Mass
+  (3-5) Position
+  (6-8) Velocity

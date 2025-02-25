@@ -1,5 +1,5 @@
-bhswallow and bhformation files
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ASCII output file formats
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The bhswallow and bhformation data files are ascii data files written by GIZMO as the simulation runs, each time there is an accretion or sink formation event.
 
@@ -81,3 +81,22 @@ bhformation
    (16) column density
    (17) velocity gradient^2
    (18) min dist to nearest star
+
+
+
+
+SN_details_STARFORGE
+^^^^^^^^^^^^^^^^^^^^
+SN_details_STARFORGE.txt records each supernova event.
+
+::
+
+   (0) Time
+   (1) ID
+   (2) Mass
+   (3) X
+   (4) Y
+   (5) Z
+   (6) vx
+   (7) vy
+   (8) vz

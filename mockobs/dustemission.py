@@ -84,8 +84,9 @@ def make_dustemission_map_from_snapshot(path):
         center = 0.5 * np.array(3 * [boxsize])
 
     dx = size / (RES - 1)
+    # print("making dust emission map...")
     intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center)
-
+    # print("done!")
     # add noise
     # SNR = 60
     # noise_norm = intensity/SNR + 1e-18 * 10**(-np.log10(WAVELENGTHS[None,None,:]/500) * 2)
@@ -93,12 +94,14 @@ def make_dustemission_map_from_snapshot(path):
     # N_eff = SNR_tot**-2
     # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
     h = h.clip(dx, 1e100)
+    # print("making surface density map...")
     sigmagas = GridSurfaceDensity(m, x, h, center, size, RES)
+    # print("done!")
     X = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[0]
     Y = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[1]
     X, Y = np.meshgrid(X, Y, indexing="ij")
 
-    fname = path.split("/")[-1].replace(".hdf5", ".dustemission.hdf5")
+    fname = path.split("/")[-1].replace(".hdf5", f".dustemission_Res{RES}.hdf5")
     if OUTPATH:
         imgpath = OUTPATH + fname
     else:
@@ -116,27 +119,30 @@ def make_dustemission_map_from_snapshot(path):
 
         if len(WAVELENGTHS) >= 3:
             # fit each pixel to a modified blackbody as an observer would
+            # print("doing 3-parameter blackbody fits...")
             params = modified_blackbody_fit_image(intensity, 0.1 * intensity, WAVELENGTHS)
-            tau0, beta, Tdust_fit = (
-                params[:, :, 0],
-                params[:, :, 1],
-                params[:, :, 2],
-            )
+            # print("done!")
+            tau0, beta, Tdust_fit = (params[:, :, 0], params[:, :, 1], params[:, :, 2])
 
             F.create_dataset("Fit_Tau500um", data=tau0)
             F.create_dataset("Fit_Beta", data=beta)
             F.create_dataset("Fit_Tdust", data=Tdust_fit)
             F.create_dataset("Tdust_massweighted", data=Tdust_avg)
-
+            # print("doing 2-parameter blackbody fits...")
             params_avg = modified_blackbody_fit_gaussnewton(
                 intensity.mean((0, 1)), 0.1 * intensity.mean((0, 1)), WAVELENGTHS
             )
-
+            # print("done!")
             tau0, beta, Tdust_fit = params_avg
-
             F.create_dataset("SEDFit_Tau500um", data=tau0)
             F.create_dataset("SEDFit_Beta", data=beta)
             F.create_dataset("SEDFit_Tdust", data=Tdust_fit)
+
+            params = modified_blackbody_fit_image(intensity, 0.1 * intensity, WAVELENGTHS, fixed_beta=1.8)
+            tau0, Tdust_fit = params[:, :, 0], params[:, :, 1]
+
+            F.create_dataset("Fit_Beta1.8_Tau500um", data=tau0)
+            F.create_dataset("Fit_Beta1.8_Tdust", data=Tdust_fit)
 
 
 def main():

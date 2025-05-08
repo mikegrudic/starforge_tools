@@ -1,3 +1,5 @@
+.. _interfacing
+
 Interfacing with GIZMO/STARFORGE HDF5 outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -19,6 +21,8 @@ Note that there is a ``Header`` containing metadata about the simulation, and th
 - 4: Stellar populations/clusters (again not in normal STARFORGE cloud runs, but found in FIRE galaxy simulations)
 - 5: Sink particles, representing stars or black holes.
 
+For a detailed explanation of the data fields, see :ref:`datafields`.
+
 Note the array shapes reported by ``h5ls`` for the different datasets. Each dataset is a 1- or 2-dimensional array where each entry in the first index corresponds to a particle. In our example above, there are 24429562 type 0 (gas) particles in the simulation, and each has a 3D coordinate, so the shape of ``PartType0/Coordinates`` is ``{24429562,3}``. For a description of what each data field represents, please see the `GIZMO Documentation <http://www.tapir.caltech.edu/~phopkins/Site/GIZMO_files/gizmo_documentation.html>`__.
 
 Except where otherwise specified (e.g. stellar luminosities and radii are in Solar units), particle data are in \*code units\*. The standard code units used in STARFORGE simulations to date (7/10/2024) are:
@@ -31,10 +35,6 @@ Except where otherwise specified (e.g. stellar luminosities and radii are in Sol
 Note that all other dimensional quantities’ units can be derived from the above. E.g., the unit time is ``1pc / 1m/s = 979Myr``.
 
 If in doubt, you can check the units system in the Header, which brings us to the next section.
-
-Detailed explanation of data fields
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-
 
 
 Loading data with h5py

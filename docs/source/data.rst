@@ -1,3 +1,4 @@
+.. _datafields
 
 **********************************
 Data Fields In STARFORGE Snapshots
@@ -5,7 +6,7 @@ Data Fields In STARFORGE Snapshots
 
 The basic dataset of a STARFORGE simulation consists of a set of chronologically-ordered snapshots containing different "particle" types. By particle, we simply mean the data structure of a point in space with certain associated properties. However, some particle types do behave like actual physical particles.
 
-This article documents the different data fields; for guidance on how to interact with the snapshots in your analysis, check out `this page <wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs.rst>`.
+This article documents the different data fields; for guidance on how to interact with the snapshots in your analysis, check out :ref:`interfacing`.
 
 Common data fields 
 ==================

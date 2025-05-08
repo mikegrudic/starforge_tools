@@ -7,6 +7,7 @@ STARFORGE Documentation
    :maxdepth: 1
    :caption: Running your own simulations:
 
+   data
    wiki_pages/compiler_flags_for_different_starforge_setups
    wiki_pages/getting_settup_on_frontera_stampede_tacc_systems
    wiki_pages/machine-specific_tips_notes_and_submit_scripts

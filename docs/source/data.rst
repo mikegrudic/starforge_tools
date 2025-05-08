@@ -15,16 +15,30 @@ Both gas and star particles will have these basic data fields.
 ``PartType0/Metallicity``: The metallicity of the particle in mass fraction units.
 
 Each particle will have an array of mass fractions for each species, with corresponding Solar values given in parentheses:
-   0. Mass fraction in elements heavier than He (0.0142)
-   1. He, (0.27030)
+   0. All elements heavier than He (0.0142)
+   1. He (0.27030)
    2. C (2.53e-3)
-   3. N (1.32e-3)
+   3. N (7.41e-4)
+   4. O (6.13e-3)
+   5. Ne (1.34e-3)
+   6. Mg (7.57e-4)
+   7. Si (7.12e-4)
+   8. S (3.31e-4)
+   9. Ca (6.87e-5)
+   10. Fe (1.38e-3)
+
+The trailing 3 fields are special feedback tracer fields, storing the mass fraction of gas that originated in 3 different stellar feedback processes:
+   11. Protostellar jets/outflows
+   12. Stellar winds
+   13. Supernovae
 
 
 ``PartType0/Velocities``: For non-cosmological simulations, this is simply the velocity of the particle in code velocity units. For cosmological setups, this quantity is related to the canonical momentum; multiply by the square-root of the cosmological scale factor to get the physical velocity.
 
-``PartType0/ParticleIDs``: The almost-unique identifier of a particle; use this to track and identify individual particles. 
+``PartType0/ParticleIDs``: The almost-unique identifier of a particle; use this to track and identify individual particles. **Exception**: new gas cells injected into the simulations as stellar feedback get a special ID that flags them as such: ``1913298393``. idk why this was chosen.
 
+``PartType0/ParticleChildIDsNumber``: 
+``PartType0/ParticleIDGenerationNumber``: 
 
 Gas Data 
 ========
@@ -32,6 +46,10 @@ In GIZMO snapshots, particle type 0 always represents the gas elements in the si
 
 What *is* a gas cell in a GIZMO MFM/MFV simulation?
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Short answer: **it's not an SPH particle.**
+
+Long answer:
+
 This is actually kind of a tricky concept. In a finite-volume grid code, the cells represent physical, geometrically-demarcated sub-volumes of the simulation domain. In an SPH simulation, the gas particles are physical blobs of gas interacting through a force law. GIZMO MFM/MFV gas cells are neither. The data structure used is similar to the particle list in SPH, but the actual way conservation laws are solved is much more closely related to the finite-volume code.
 
 An easier concept to wrap one's head around is the Voronoi tesselation: given a set of mesh-generating points, the Voronoi tesselation is the set of sub-volumes of the domain consisting of points grouped by their closest mesh-generating point. In a Voronoi tesselation, 100% of the "weight" of each point in space is assigned to the nearest mesh-generating point (see panel 2 below).
@@ -40,7 +58,7 @@ An easier concept to wrap one's head around is the Voronoi tesselation: given a 
 
 The discretization used in GIZMO's MFM/MFV methods is a generalization of the Voronoi tesselation. Instead of associating 100% of each point in space with one mesh-generating, a *weighting function* is defined to decide what *fraction* of each point belongs to each mesh-generating point. A pretty accurate way to think of it is as a Voronoi tesselation with blurry boundaries (panel 1 above). Then, the distinction between MFM and MFV lies in what is assumed about the motion of the points: the MFM method (used in all current STARFORGE simulations) is constructed so that the points move in a way where the different subdomains exchange 0 mass in a timestep. This leads to a quasi-Lagrangian method that allows us to follow gas elements of fixed mass.
 
-This details matter for how the simulation is run, but once we have the outputs it's usually fine to think of the gas cells as a collection of particles and analyze and interpret the data as you would any SPH particle dataset.
+This details matter for how the simulation is run, but once we have the outputs it's usually fine to think of the gas cells as a collection of particles and analyze and interpret the data as you would e.g. an SPH particle dataset. Or, take the coordinates to be mesh-generating points of a Voronoi tesselation if you have something that can analyze that.
 
 Gas data fields
 ^^^^^^^^^^^^^^^
@@ -54,8 +72,7 @@ Gas data fields
 ``PartType0/MagneticField``
 ``PartType0/MolecularMassFraction``
 ``PartType0/NeutralHydrogenAbundance``
-``PartType0/ParticleChildIDsNumber``
-``PartType0/ParticleIDGenerationNumber``
+
 ``PartType0/PhotonEnergy``
 ``PartType0/PhotonFluxDensity``
 ``PartType0/Potential``

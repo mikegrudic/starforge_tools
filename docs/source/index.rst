@@ -5,7 +5,8 @@ STARFORGE Documentation
 
 Welcome to the documentation for the STARFORGE simulations.
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
+   :caption: Common Workflows:
    
    common_workflows
 

@@ -21,6 +21,7 @@ STARFORGE Documentation
    :maxdepth: 1
    :caption: Analyzing existing simulations:
 
+   datafields
    wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs
    wiki_pages/reading_bhswallow_and_bhformation_datafiles   
    wiki_pages/fitting_to_a_power-law_or_schechter_function

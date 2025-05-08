@@ -12,9 +12,14 @@ Both gas and star particles will have these basic data fields.
 
 ``PartType0/Masses``: The mass of the particle in code mass units.
 
-``PartType0/Metallicity``: The metallicity of the particle in mass fraction units:
-   0. Mass fraction in elements heavier than helium. Solar value: `0.0142`
-   1. Mass fraction of He. Solar value: `0.27030`
+``PartType0/Metallicity``: The metallicity of the particle in mass fraction units.
+
+Each particle will have an array of mass fractions for each species, with corresponding Solar values given in parentheses:
+   0. Mass fraction in elements heavier than He (0.0142)
+   1. He, (0.27030)
+   2. C (2.53e-3)
+   3. N (1.32e-3)
+
 
 ``PartType0/Velocities``: For non-cosmological simulations, this is simply the velocity of the particle in code velocity units. For cosmological setups, this quantity is related to the canonical momentum; multiply by the square-root of the cosmological scale factor to get the physical velocity.
 

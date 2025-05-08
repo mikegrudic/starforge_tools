@@ -85,12 +85,15 @@ Gas data fields
 ``PartType0/SmoothingLength``: Radius of the kernel function in code length
 ``PartType0/Temperature``: Temperature in K
 
-Sink particle data fields
-^^^^^^^^^^^^^^^^^^^^^^^^^
+Sink particles
+==============
 In STARFORGE, each star lives inside a sink particle. The sink particle is the construct that actually interacts with the simulation domain, and the star itself is considered to be an unresolved structure modeled at the sub-grid level. 
 
 Note that the sink particle implementation in GIZMO was originally developed do model black holes, so the abbreviation ``BH`` appears quite often.
 
+
+Data Fields
+^^^^^^^^^^^
 ``PartType5/BH_AccretionLength``: Sink particle search radius for accretion and feedback injection.
 ``PartType5/BH_Mass``: Mass of the sub-grid star in code mass units.
 ``PartType5/BH_Mass_AlphaDisk``: Mass of the sub-grid accretion reservoir in code units. Mass accreted by the sink first goes into this reserver; it is then smoothly accreted by the star according to a subgrid accretion prescription.

@@ -3,7 +3,17 @@
 Data Fields In STARFORGE Snapshots
 **********************************
 
-The basic dataset of a STARFORGE simulation consists of a set of chronologically-ordered snapshots 
+The basic dataset of a STARFORGE simulation consists of a set of chronologically-ordered snapshots containing different "particle" types. By particle, we simply mean the data structure of a point in space with certain associated properties. However, some particle types do behave like actual physical particles.
+
+Common data fields 
+==================
+Both gas and star particles will have these basic data fields.
+``PartType0/Coordinates``
+``PartType0/Masses``
+``PartType0/Metallicity``
+``PartType0/Velocities``
+``PartType0/ParticleIDs``
+
 
 Gas Data 
 ========
@@ -23,30 +33,24 @@ This details matter for how the simulation is run, but once we have the outputs 
 
 Gas data fields
 ^^^^^^^^^^^^^^^
-``PartType0/Coordinates``
-``PartType0/Coordinates``
 ``PartType0/Density``
 ``PartType0/DustToGasRatio_Local``
 ``PartType0/Dust_Temperature``
 ``PartType0/ElectronAbundance``
 ``PartType0/HII``
-``PartType0/IRBand_Radiation_Temperature Dataset``
+``PartType0/IRBand_Radiation_Temperature``
 ``PartType0/InternalEnergy``
 ``PartType0/MagneticField``
-``PartType0/Masses``
-``PartType0/Metallicity``
 ``PartType0/MolecularMassFraction``
 ``PartType0/NeutralHydrogenAbundance``
 ``PartType0/ParticleChildIDsNumber``
 ``PartType0/ParticleIDGenerationNumber``
-``PartType0/ParticleIDs``
 ``PartType0/PhotonEnergy``
 ``PartType0/PhotonFluxDensity``
 ``PartType0/Potential``
 ``PartType0/Pressure``
 ``PartType0/SmoothingLength``
 ``PartType0/Temperature``
-``PartType0/Velocities``
 
 
 =========

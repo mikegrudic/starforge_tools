@@ -15,7 +15,7 @@ This is actually kind of a tricky question. In a finite-volume grid code, the ce
 
 An easier concept to wrap one's head around is the Voronoi tesselation: given a set of mesh-generating points, the Voronoi tesselation is the set of sub-volumes of the domain consisting of points grouped by their closest mesh-generating point. In a Voronoi tesselation, 100% of the "weight" of each point in space is assigned to the nearest mesh-generating point. 
 
-.. image:: media/method_demo.png
+.. image:: media/method_demo.jpeg
 
 Once the simulation is run, it's usually fine to think of the gas cells as a collection of particles and analyze and interpret the data as you would any SPH particle dataset.
 

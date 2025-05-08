@@ -25,8 +25,8 @@ Gas Data
 ========
 In GIZMO snapshots, particle type 0 always represents the gas elements in the simulation.
 
-What is a gas cell in a GIZMO MFM/MFV simulation?
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+What *is* a gas cell in a GIZMO MFM/MFV simulation?
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 This is actually kind of a tricky concept. In a finite-volume grid code, the cells represent physical, geometrically-demarcated sub-volumes of the simulation domain. In an SPH simulation, the gas particles are physical blobs of gas interacting through a force law. GIZMO MFM/MFV gas cells are neither. The data structure used is similar to the particle list in SPH, but the actual way conservation laws are solved is much more closely related to the finite-volume code.
 
 An easier concept to wrap one's head around is the Voronoi tesselation: given a set of mesh-generating points, the Voronoi tesselation is the set of sub-volumes of the domain consisting of points grouped by their closest mesh-generating point. In a Voronoi tesselation, 100% of the "weight" of each point in space is assigned to the nearest mesh-generating point (see panel 2 below).

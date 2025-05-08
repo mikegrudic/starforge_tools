@@ -8,11 +8,17 @@ The basic dataset of a STARFORGE simulation consists of a set of chronologically
 Common data fields 
 ==================
 Both gas and star particles will have these basic data fields.
-``PartType0/Coordinates``
-``PartType0/Masses``
-``PartType0/Metallicity``
-``PartType0/Velocities``
-``PartType0/ParticleIDs``
+``PartType0/Coordinates``: The coordinates of the center of the particle. For non-cosmological simulations, these are physical coordinates. For cosmological simulations, they are co-moving, so multiply by the cosmological scale-factor to get the physical coordinates.
+
+``PartType0/Masses``: The mass of the particle in code mass units.
+
+``PartType0/Metallicity``: The metallicity of the particle in mass fraction units:
+   0. Mass fraction in elements heavier than helium. Solar value: `0.0142`
+   1. Mass fraction of He. Solar value: `0.27030`
+
+``PartType0/Velocities``: For non-cosmological simulations, this is simply the velocity of the particle in code velocity units. For cosmological setups, this quantity is related to the canonical momentum; multiply by the square-root of the cosmological scale factor to get the physical velocity.
+
+``PartType0/ParticleIDs``: The almost-unique identifier of a particle; use this to track and identify individual particles. 
 
 
 Gas Data 

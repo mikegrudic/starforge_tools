@@ -72,11 +72,11 @@ Gas data fields
 ``PartType0/MolecularMassFraction``: Fraction of *neutral* H that is molecular.
 ``PartType0/NeutralHydrogenAbundance``: Fraction of H nuclei that are in neutral species.
 ``PartType0/PhotonEnergy``: **Total** photon energy associated with the gas cell, in code energy = code mass * code speed^2. You have to divide this by the volume (V=mass/density) to get the radiation energy density. In RT runs this generally comes in 5 bands:
-   0. Lyman continuum (13.6eV+): this ionizes stuff and heats HII regions up to ~10^4K
-   1. Photoelectric FUV (8-13.6eV): this is the band relevant for the grain photoelectric effect, which is a key heat source for the ISM.
-   2. Near UV (3.4-8eV): carries much of the energy and momentum in the SED emitted by a young stellar population.
-   3. Optical-near IR (0.4-3.4eV): Also carries signficant momentum; the main component of the interstellar radiation field responsible for heating dust in the diffuse ISM.
-   4. Mid-far IR: variable-temperature blackbody component sourced by gas cooling and dust emission.
+   0. **Lyman continuum (13.6eV+)**: this ionizes stuff and heats HII regions up to ~10^4K
+   1. **Photoelectric FUV (8-13.6eV)**: this is the band relevant for the grain photoelectric effect, which is a key heat source for the ISM.
+   2. **Near UV (3.4-8eV)**: carries much of the energy and momentum in the SED emitted by a young stellar population.
+   3. **Optical-near IR (0.4-3.4eV)**: Also carries signficant momentum; the main component of the interstellar radiation field responsible for heating dust in the diffuse ISM.
+   4. **Mid-far IR**: variable-temperature blackbody component sourced by gas cooling and dust emission.
 ``PartType0/PhotonFluxDensity`` Photon flux density in units of code energy / area / time; 3D vector for each of the bands described above.
 ``PartType0/Dust_Temperature``: The temperature of a dust grain in K. Obtained by neglecting dust heat capacity and solving for the equilibrium of dust-gas thermal coupling, radiative absorption, and radiative emission, using grain size-integrated dust opacities and gas collision cross sections. Note that this neglects variations in grain composition, and stochastic heating of small grains.
 ``PartType0/IRBand_Radiation_Temperature``: Effective blackbody temperature of the variable-SED far-IR radiation band.

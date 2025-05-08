@@ -112,5 +112,5 @@ Note that the sink particle implementation in GIZMO was originally developed do 
 ``PartType5/ProtoStellarRadius_inSolar``: Radius of the star in Solar radii
 ``PartType5/SinkInitialMass``: Mass of the gas cell when it turned into a sink particle.
 ``PartType5/SinkRadius``: Radius of the sink particle, outside of which particles are ineligible for accretion.
-``PartType5/StarLuminosity_Solar``: Total luminosity of the protostar in Solar luminosity.
+``PartType5/StarLuminosity_Solar``: Total bolometric luminosity of the protostar in Solar luminosity.
 ``PartType5/ZAMS_Mass``: This is the running maximum mass that a star has ever had. Once the star has actually reached the Main Sequence, this is what we consider to by the Zero-Age Main Sequence mass for the purposes of mapping onto stellar evolution grids.

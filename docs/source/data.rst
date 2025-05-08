@@ -1,4 +1,4 @@
-.. _datafields
+.. _datafields:
 
 **********************************
 Data Fields In STARFORGE Snapshots

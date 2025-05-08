@@ -1,4 +1,4 @@
-.. _interfacing
+.. _interfacing:
 
 Interfacing with GIZMO/STARFORGE HDF5 outputs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

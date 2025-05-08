@@ -5,6 +5,8 @@ Data Fields In STARFORGE Snapshots
 
 The basic dataset of a STARFORGE simulation consists of a set of chronologically-ordered snapshots containing different "particle" types. By particle, we simply mean the data structure of a point in space with certain associated properties. However, some particle types do behave like actual physical particles.
 
+This article documents the different data fields; for guidance on how to interact with the snapshots in your analysis, check out `this page <wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs.rst>`.
+
 Common data fields 
 ==================
 Both gas and star particles will have these basic data fields.
@@ -64,25 +66,40 @@ This details matter for how the simulation is run, but once we have the outputs 
 Gas data fields
 ^^^^^^^^^^^^^^^
 ``PartType0/Density``: The average density of a gas cell (=mass/volume) in code units. In cosmological runs this is comoving density: divide by a^3 to get physical density.
+
 ``PartType0/DustToGasRatio_Local``: The local dust-to-gas mass ratio.
+
 ``PartType0/ElectronAbundance``: Number of free electrons per H nucleon
+
 ``PartType0/HII``: Abundance of H+
+
 ``PartType0/InternalEnergy``: Thermal energy per unit mass in code units.
+
 ``PartType0/MagneticField``: Magnetic field in code units.
+
 ``PartType0/MolecularMassFraction``: Fraction of *neutral* H that is molecular.
+
 ``PartType0/NeutralHydrogenAbundance``: Fraction of H nuclei that are in neutral species.
+
 ``PartType0/PhotonEnergy``: **Total** photon energy associated with the gas cell, in code energy = code mass * code speed^2. You have to divide this by the volume (V=mass/density) to get the radiation energy density. In RT runs this generally comes in 5 bands:
    0. **Lyman continuum (13.6eV+)**: this ionizes stuff and heats HII regions up to ~10^4K
    1. **Photoelectric FUV (8-13.6eV)**: this is the band relevant for the grain photoelectric effect, which is a key heat source for the ISM.
    2. **Near UV (3.4-8eV)**: carries much of the energy and momentum in the SED emitted by a young stellar population.
    3. **Optical-near IR (0.4-3.4eV)**: Also carries signficant momentum; the main component of the interstellar radiation field responsible for heating dust in the diffuse ISM.
    4. **Mid-far IR**: variable-temperature blackbody component sourced by gas cooling and dust emission.
+
 ``PartType0/PhotonFluxDensity`` Photon flux density in units of code energy / area / time; 3D vector for each of the bands described above.
+
 ``PartType0/Dust_Temperature``: The temperature of a dust grain in K. Obtained by neglecting dust heat capacity and solving for the equilibrium of dust-gas thermal coupling, radiative absorption, and radiative emission, using grain size-integrated dust opacities and gas collision cross sections. Note that this neglects variations in grain composition, and stochastic heating of small grains.
+
 ``PartType0/IRBand_Radiation_Temperature``: Effective blackbody temperature of the variable-SED far-IR radiation band.
+
 ``PartType0/Potential``: Value of the gravitational potential at the location of the particle in code speed^2
+
 ``PartType0/Pressure``: Pressure in code units
+
 ``PartType0/SmoothingLength``: Radius of the kernel function in code length
+
 ``PartType0/Temperature``: Temperature in K
 
 Sink particles
@@ -95,14 +112,21 @@ Note that the sink particle implementation in GIZMO was originally developed do 
 Data Fields
 ^^^^^^^^^^^
 ``PartType5/BH_AccretionLength``: Sink particle search radius for accretion and feedback injection.
+
 ``PartType5/BH_Mass``: Mass of the sub-grid star in code mass units.
+
 ``PartType5/BH_Mass_AlphaDisk``: Mass of the sub-grid accretion reservoir in code units. Mass accreted by the sink first goes into this reserver; it is then smoothly accreted by the star according to a subgrid accretion prescription.
+
 ``PartType5/BH_Mdot``: Subgrid mass accretion rate.
-``PartType5/BH_NProgs``: 
+
 ``PartType5/BH_Specific_AngMom``: Specific angular momentum in units of code length * code speed
+
 ``PartType5/Mass_D``: Mass of deuterium remaining in the star.
+
 ``PartType5/ProtoStellarAge``: Time at which the sink particle formed in code time units (= code length / code speed)
+
 ``PartType5/StellarFormationTime``: Time since the star advanced a phase in the protostellar evolution model.
+
 ``PartType5/ProtoStellarStage``: Stage of protostellar evolution, following Offner 2009:
 
    0. Pre-collapse
@@ -113,7 +137,11 @@ Data Fields
    5. Main Sequence
    6. Remnant
 ``PartType5/ProtoStellarRadius_inSolar``: Radius of the star in Solar radii
+
 ``PartType5/SinkInitialMass``: Mass of the gas cell when it turned into a sink particle.
+
 ``PartType5/SinkRadius``: Radius of the sink particle, outside of which particles are ineligible for accretion.
+
 ``PartType5/StarLuminosity_Solar``: Total bolometric luminosity of the protostar in Solar luminosity.
+
 ``PartType5/ZAMS_Mass``: This is the running maximum mass that a star has ever had. Once the star has actually reached the Main Sequence, this is what we consider to by the Zero-Age Main Sequence mass for the purposes of mapping onto stellar evolution grids.

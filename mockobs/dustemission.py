@@ -58,7 +58,11 @@ SOLAR_Z = 0.0142
 def make_dustemission_map_from_snapshot(path):
     """Makes a dust emission map from a STARFORGE snapshot"""
     with h5py.File(path, "r") as F:
-        x = np.float32(F["PartType0/Coordinates"][:])
+        try:
+            x = np.float32(F["PartType0/Coordinates"][:])
+        except:
+            raise Warning(f"Could not read {path}")
+            return
         m = np.float32(F["PartType0/Masses"][:])
         h = np.float32(F["PartType0/SmoothingLength"][:])
         Z = F["PartType0/Metallicity"][:]
@@ -95,7 +99,7 @@ def make_dustemission_map_from_snapshot(path):
     # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
     h = h.clip(dx, 1e100)
     # print("making surface density map...")
-    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES)
+    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES,parallel=True)
     # print("done!")
     X = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[0]
     Y = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[1]

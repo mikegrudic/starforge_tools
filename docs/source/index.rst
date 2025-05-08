@@ -7,7 +7,6 @@ STARFORGE Documentation
    :maxdepth: 1
    :caption: Running your own simulations:
 
-   data
    wiki_pages/compiler_flags_for_different_starforge_setups
    wiki_pages/getting_settup_on_frontera_stampede_tacc_systems
    wiki_pages/machine-specific_tips_notes_and_submit_scripts
@@ -22,7 +21,7 @@ STARFORGE Documentation
    :maxdepth: 1
    :caption: Analyzing existing simulations:
 
-   datafields
+   data
    wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs
    wiki_pages/reading_bhswallow_and_bhformation_datafiles   
    wiki_pages/fitting_to_a_power-law_or_schechter_function

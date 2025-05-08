@@ -3,6 +3,16 @@
 STARFORGE Documentation
 ===================================
 
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Analyzing existing simulations:
+
+   data
+   wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs
+   wiki_pages/reading_bhswallow_and_bhformation_datafiles   
+   wiki_pages/fitting_to_a_power-law_or_schechter_function
+
 .. toctree::
    :maxdepth: 1
    :caption: Running your own simulations:
@@ -15,16 +25,6 @@ STARFORGE Documentation
    wiki_pages/notes_for_setting_up_turbsphere_runs
    wiki_pages/running_gizmo_on_bridges-2_anvil_amd_epyc_systems
 
-
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Analyzing existing simulations:
-
-   data
-   wiki_pages/interfacing_with_gizmo_starforge_hdf5_outputs
-   wiki_pages/reading_bhswallow_and_bhformation_datafiles   
-   wiki_pages/fitting_to_a_power-law_or_schechter_function
 
 
 .. toctree::

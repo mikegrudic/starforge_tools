@@ -41,6 +41,12 @@ STARFORGE Documentation
    wiki_pages/hpc_linux_tips_tricks
    wiki_pages/setting_up_ffmpeg
 
+.. toctree::
+   :maxdepth: 1
+   :caption: Community
+
+   community
+
 
 Indices and tables
 ==================

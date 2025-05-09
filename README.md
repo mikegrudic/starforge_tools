@@ -1,3 +1,7 @@
+[![Documentation Status](https://readthedocs.org/projects/starforge-tools/badge/?version=latest)](https://starforge-tools.readthedocs.io/en/latest/?badge=latest)
+
+# [STARFORGE Simulations  Documentation](https://starforge-tools.readthedocs.io/en/latest/)
+
 # starforge_tools
 useful scripts for running and analyzing STARFORGE simulations
 

@@ -3,6 +3,7 @@
 STARFORGE Documentation
 ===================================
 
+:ref:`getdata`
 
 .. toctree::
    :maxdepth: 1

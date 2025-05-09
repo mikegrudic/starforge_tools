@@ -3,9 +3,13 @@
 STARFORGE Documentation
 ===================================
 
-**************
-:ref:`getdata`
-**************
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Getting the data
+   
+   getdata
+
 
 .. toctree::
    :maxdepth: 1

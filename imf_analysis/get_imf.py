@@ -15,8 +15,8 @@ def get_imf(run):  # give the output folders of the runs you want to look at
     t0_dict = {}
     snaps = glob(run + "/snapshot_*.hdf5")
     for s in snaps:
-#        if "stars" in s:
-#            continue
+        #        if "stars" in s:
+        #            continue
         try:
             with h5py.File(s, "r") as F:
                 if not "PartType5" in F.keys():

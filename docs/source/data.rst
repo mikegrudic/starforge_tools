@@ -11,6 +11,7 @@ This article documents the different data fields; for guidance on how to interac
 Common data fields 
 ==================
 Both gas and star particles will have these basic data fields.
+
 ``PartType0/Coordinates``: The coordinates of the center of the particle. For non-cosmological simulations, these are physical coordinates. For cosmological simulations, they are co-moving, so multiply by the cosmological scale-factor to get the physical coordinates.
 
 ``PartType0/Masses``: The mass of the particle in code mass units.

@@ -9,8 +9,6 @@ A spreadsheet documenting existing simulations is available `here <https://starf
 
 You can also browse the dataset directly `here <https://users.flatironinstitute.org/~mgrudic/starforge_data>`_.
 
-Working on Rusty via Binder
-===========================
 It is also possible to perform limited analysis and computation with the data on Rusty directly via `Binder <https://wiki.flatironinstitute.org/Public/UsingFiBinder>`_:
     1. Give mike a gmail address you will use - if your institution uses gmail, your institution email will work. This must be added to the permissions list.
     2. Go to binder.flatironinstitute.org and login with that gmail account.

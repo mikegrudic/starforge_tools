@@ -125,7 +125,7 @@ Data Fields
 
 ``PartType5/Mass_D``: Mass of deuterium remaining in the star.
 
-``PartType5/ProtoStellarAge``: Time at which the sink particle formed in code time units (= code length / code speed)
+``PartType5/ProtoStellarAge``: Last time that the sink particle formed in code time units (= code length / code speed)
 
 ``PartType5/StellarFormationTime``: Time since the star advanced a phase in the protostellar evolution model.
 

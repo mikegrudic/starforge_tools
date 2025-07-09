@@ -91,10 +91,13 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
         rhogrid = 10 ** M.InterpToGrid(
             np.log10(rho), size=boxsize, res=powerspec_gridres, center=center
         )  # M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
+#        rhogrid_norm = np.sum(rhogrid**2 * (boxsize / powerspec_gridres)**3)
         if verbose:
             print("Interpolating v to grid...")
         vgrid = M.InterpToGrid(v, size=boxsize, res=powerspec_gridres, center=center)
+#        vgrid_norm = np.sum(rhogrid**2 * (boxsize / powerspec_gridres)**3)
         vgrid = np.rollaxis(vgrid, -1, 0)
+
 
         if verbose:
             print("Interpolating B to grid...")

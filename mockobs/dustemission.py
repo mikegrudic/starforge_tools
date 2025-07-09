@@ -97,7 +97,7 @@ def make_dustemission_map_from_snapshot(path):
     # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
     h = h.clip(dx, 1e100)
     # print("making surface density map...")
-    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES,parallel=True)
+    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES, parallel=True)
     # print("done!")
     X = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[0]
     Y = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[1]

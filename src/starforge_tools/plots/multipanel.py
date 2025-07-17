@@ -8,6 +8,8 @@ from matplotlib import pyplot as plt
 import h5py
 from glob import glob
 from astropy import units as u
+from scipy.spatial import KDTree
+import numpy as np
 
 DEFAULT_MAPS = ["SurfaceDensity", "Sigma1D", "MassWeightedTemperature", "AlfvenSpeed"]
 
@@ -20,7 +22,7 @@ REQUIRED_DATAFIELDS = {
 }
 
 
-def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS):
+def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
     """Does the I/O to get the data required for the specified maps"""
     required_data = set.union(*[REQUIRED_DATAFIELDS[s] for s in maps])
     snapdata = {}
@@ -40,7 +42,7 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS):
 def get_snapshot_units(F):
     unit_length = F["Header"].attrs["UnitLength_In_CGS"] * u.cm
     unit_speed = F["Header"].attrs["UnitVelocity_In_CGS"] * u.cm / u.s
-    unit_mass = F["Header"].attrs["UnitMass_in_CGS"] * u.g
+    unit_mass = F["Header"].attrs["UnitMass_In_CGS"] * u.g
     unit_magnetic_field = 1e4 * u.gauss
     return {"Length": unit_length, "Speed": unit_speed, "Mass": unit_mass, "MagneticField": unit_magnetic_field}
 
@@ -53,14 +55,35 @@ def get_snapshot_timeline(output_dir):
     for f in snappaths:
         with h5py.File(f, "r") as F:
             units = get_snapshot_units(F)
-            times.append(F["Header"].attrs["Time"] * units["Length"] / units["Speed"])
+            times.append(F["Header"].attrs["Time"])
     print("Done!")
-    return snappaths, times
+
+    return np.array(snappaths), np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
 
 
-def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=[0, 3, 6, 9], output_dir="."):
+def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=4, output_dir=".", res=1024, length=20):
+
+    snappaths, snaptimes = get_snapshot_timeline(output_dir)
+
+    if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced
+        snaps = snappaths[:: len(snappaths) // times]
+        times = snaptimes[:: len(snaptimes) // times]
+    elif len(times):  # eventually implement nearest-neighbor snapshots of specified times
+        _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
+        snaps = snappaths[ngb_idx]
+    else:
+        raise NotImplementedError("Format not recognized for supplied times for multipanel map.")
+
     num_maps, num_times = len(maps), len(times)
-    fig, ax = plt.subplots(num_maps, num_times)
+    fig, ax = plt.subplots(num_maps, num_times, figsize=(8, 8))
+
+    for i in range(len(times)):
+        pdata = get_pdata_for_maps(snaps[i], maps)
+        M = Meshoid(pdata["PartType0/Coordinates"], pdata["PartType0/Masses"], pdata["PartType0/SmoothingLength"])
+        for j in range(len(maps)):
+            X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
+            map = M.SurfaceDensity(pdata["PartType0/Masses"], res=res, size=length)
+            ax[j, i].pcolormesh(X, Y, np.log10(map))
 
     plt.show()
 

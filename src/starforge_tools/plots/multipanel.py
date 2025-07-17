@@ -62,7 +62,6 @@ def get_snapshot_timeline(output_dir):
 
 
 def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=4, output_dir=".", res=1024, length=20):
-
     snappaths, snaptimes = get_snapshot_timeline(output_dir)
 
     if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced

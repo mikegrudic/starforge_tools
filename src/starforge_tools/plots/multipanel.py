@@ -2,22 +2,22 @@
 stacking the different maps atop one another.
 """
 
+from glob import glob
+from os.path import isfile
 from natsort import natsorted
-from meshoid import Meshoid
 from matplotlib import pyplot as plt
 import h5py
-from glob import glob
 from astropy import units as u
 from scipy.spatial import KDTree
 import numpy as np
 from .map_renderer import MapRenderer
 
-DEFAULT_MAPS = ["SurfaceDensity", "Sigma1D", "MassWeightedTemperature", "AlfvenSpeed"]
+DEFAULT_MAPS = ("SurfaceDensity", "VelocityDispersion", "MassWeightedTemperature", "AlfvenSpeed")
 
 MINIMAL_DATAFIELDS = set(("PartType0/Masses", "PartType0/Coordinates", "PartType0/SmoothingLength"))
 REQUIRED_DATAFIELDS = {
     "SurfaceDensity": MINIMAL_DATAFIELDS,
-    "Sigma1D": MINIMAL_DATAFIELDS.union(("PartType0/Velocities",)),
+    "VelocityDispersion": MINIMAL_DATAFIELDS.union(("PartType0/Velocities",)),
     "MassWeightedTemperature": MINIMAL_DATAFIELDS.union(("PartType0/Temperature",)),
     "AlfvenSpeed": MINIMAL_DATAFIELDS.union(("PartType0/MagneticField", "PartType0/Density")),
 }
@@ -48,26 +48,39 @@ def get_snapshot_units(F):
     return {"Length": unit_length, "Speed": unit_speed, "Mass": unit_mass, "MagneticField": unit_magnetic_field}
 
 
-def get_snapshot_timeline(output_dir):
+def get_snapshot_timeline(output_dir, verbose=False):
+    print(output_dir)
     times = []
     snappaths = []
-    print("Getting snapnum timeline...")
+    if verbose:
+        print("Getting snapnum timeline...")
     snappaths = natsorted(glob(output_dir + "/snapshot*.hdf5"))
-    for f in snappaths:
-        with h5py.File(f, "r") as F:
-            units = get_snapshot_units(F)
-            times.append(F["Header"].attrs["Time"])
-    print("Done!")
+    if not snappaths:
+        raise FileNotFoundError(f"No snapshots found in {output_dir}")
 
+    timelinepath = output_dir + "/.timeline"
+    if isfile(timelinepath):  # check if we have a cached timeline file
+        times = np.load(timelinepath)
+
+    with h5py.File(snappaths[0], "r") as F:
+        units = get_snapshot_units(F)
+
+    if len(times) < len(snappaths):
+        for f in snappaths:
+            with h5py.File(f, "r") as F:
+                times.append(F["Header"].attrs["Time"])
+    if verbose:
+        print("Done!")
+    np.save(timelinepath, np.array(times))
     return np.array(snappaths), np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
 
 
-def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=4, output_dir=".", res=1024, length=20):
+def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=1024, length=20):
     snappaths, snaptimes = get_snapshot_timeline(output_dir)
 
     if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced
-        snaps = snappaths[:: len(snappaths) // times]
-        times = snaptimes[:: len(snaptimes) // times]
+        snaps = snappaths[:: len(snappaths) // (times - 1)]
+        times = snaptimes[:: len(snaptimes) // (times - 1)]
     elif len(times):  # eventually implement nearest-neighbor snapshots of specified times
         _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
         snaps = snappaths[ngb_idx]
@@ -80,12 +93,10 @@ def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=4, output_dir=".", res=102
     X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
     for i in range(len(times)):
         pdata = get_pdata_for_maps(snaps[i], maps)
-        M = Meshoid(pdata["PartType0/Coordinates"], pdata["PartType0/Masses"], pdata["PartType0/SmoothingLength"])
         renderer = MapRenderer(pdata, mapargs)
-        # or j in range(len(maps)):
-        #   print(i,j)
-        #  map = getattr(multipanel_maps, maps[j])(pdata,M,mapargs)
-        #   ax[j, i].pcolormesh(X, Y, np.log10(map))
+        for j, map_name in enumerate(maps):
+            # print(i, j)
+            map = renderer.get_map(map_name)
+            ax[j, i].pcolormesh(X, Y, np.log10(map))
 
     plt.savefig("multipanel.png")
-    # get

@@ -10,6 +10,7 @@ from glob import glob
 from astropy import units as u
 from scipy.spatial import KDTree
 import numpy as np
+from .map_renderer import MapRenderer
 
 DEFAULT_MAPS = ["SurfaceDensity", "Sigma1D", "MassWeightedTemperature", "AlfvenSpeed"]
 
@@ -76,15 +77,16 @@ def multipanel_timelapse_map(maps=DEFAULT_MAPS, times=4, output_dir=".", res=102
 
     num_maps, num_times = len(maps), len(times)
     fig, ax = plt.subplots(num_maps, num_times, figsize=(8, 8))
-
+    mapargs = {"size": length, "res": res}
+    X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
     for i in range(len(times)):
         pdata = get_pdata_for_maps(snaps[i], maps)
         M = Meshoid(pdata["PartType0/Coordinates"], pdata["PartType0/Masses"], pdata["PartType0/SmoothingLength"])
-        for j in range(len(maps)):
-            X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
-            map = M.SurfaceDensity(pdata["PartType0/Masses"], res=res, size=length)
-            ax[j, i].pcolormesh(X, Y, np.log10(map))
+        renderer = MapRenderer(pdata, mapargs)
+        # or j in range(len(maps)):
+        #   print(i,j)
+        #  map = getattr(multipanel_maps, maps[j])(pdata,M,mapargs)
+        #   ax[j, i].pcolormesh(X, Y, np.log10(map))
 
-    plt.show()
-
+    plt.savefig("multipanel.png")
     # get

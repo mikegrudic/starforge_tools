@@ -87,7 +87,7 @@ for f in snapshot_paths:
         closest = dist.argmin()
         hsml = F["PartType0/SmoothingLength"][:][closest]
 
-#        print(options["--v"])
+        #        print(options["--v"])
         if options["--v"] == "comoving":
             vstar = F["PartType0/Velocities"][:][closest]
         elif options["--v"] == "0,0,0":

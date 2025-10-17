@@ -3,7 +3,7 @@
 
 from meshoid import Meshoid
 import numpy as np
-from . import rendermap
+import rendermaps
 
 
 class MapRenderer:
@@ -14,13 +14,17 @@ class MapRenderer:
         )
         self.mapargs = mapargs
         self.rendered_maps = {}
+        self.limits = {}
+        self.cmap = {}
 
     def render_map(self, map_name: str):
         self.check_if_map_implemented(map_name)
-        map = getattr(rendermap, map_name)()
+        map = getattr(rendermaps, map_name)
         self.rendered_maps[map_name] = map.render(self.pdata, self.meshoid, self.mapargs)
+        self.limits[map_name] = map.cmap_default_limits(self.rendered_maps[map_name])
+        self.cmap[map_name] = map.colormap
 
-    def get_map(self, map_name: str) -> np.ndarray:
+    def get_render(self, map_name: str) -> np.ndarray:
         self.check_if_map_implemented(map_name)
         if map_name not in self.rendered_maps:
             self.render_map(map_name)
@@ -28,5 +32,5 @@ class MapRenderer:
 
     def check_if_map_implemented(self, map_name: str):
         """Checks if a map is implemented in multipanel_maps.py, and if not raises an error."""
-        if map_name not in vars(rendermap):
-            raise NotImplementedError(f"Requested map {map_name} has no renderer function in multipanel_maps.py")
+        if map_name not in vars(rendermaps):
+            raise NotImplementedError(f"Requested map {map_name} has no renderer .py in rendermaps")

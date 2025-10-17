@@ -12,10 +12,9 @@ from astropy import units as u
 from scipy.spatial import KDTree
 import numpy as np
 from .map_renderer import MapRenderer
-from . import rendermap as rm
+import rendermaps
 
-
-DEFAULT_MAPS = (rm.SurfaceDensity, rm.VelocityDispersion, rm.MassWeightedTemperature, rm.AlfvenSpeed)
+DEFAULT_MAPS = ("SurfaceDensity", "VelocityDispersion", "MassWeightedTemperature", "AlfvenSpeed")
 
 # MINIMAL_DATAFIELDS = set(("PartType0/Masses", "PartType0/Coordinates", "PartType0/SmoothingLength"))
 # REQUIRED_DATAFIELDS = {
@@ -28,7 +27,7 @@ DEFAULT_MAPS = (rm.SurfaceDensity, rm.VelocityDispersion, rm.MassWeightedTempera
 
 def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
     """Does the I/O to get the data required for the specified maps"""
-    required_data = set.union(*[s.required_datafields for s in maps])
+    required_data = set.union(*[getattr(rendermaps, s).required_datafields for s in maps])
     snapdata = {}
     with h5py.File(snapshot_path, "r") as F:
         for i in range(6):
@@ -37,7 +36,7 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
                 continue
             for k in F[s].keys():
                 s2 = s + "/" + k
-                if s2 in required_data:
+                if s2 in required_data or i == 5:
                     snapdata[s2] = F[s2][:]
 
     return snapdata
@@ -97,10 +96,11 @@ def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=102
     for i in range(len(times)):
         pdata = get_pdata_for_maps(snaps[i], maps)
         renderer = MapRenderer(pdata, mapargs)
-        for j, map_name in enumerate(maps):
-            # print(i, j)
-            map = renderer.get_map(map_name)
-            ax[j, i].pcolormesh(X, Y, np.log10(map))
+        for j, mapname in enumerate(maps):
+            render = renderer.get_render(mapname)
+            limits = renderer.limits[mapname]
+            cmap = renderer.cmap[mapname]
+            ax[j, i].pcolormesh(X, Y, render, norm=colors.LogNorm(*limits), cmap=cmap)
 
     plt.savefig("multipanel.png")
 

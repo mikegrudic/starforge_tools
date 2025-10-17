@@ -24,6 +24,6 @@ def render(pdata: dict, meshoid: Meshoid, mapargs: dict):
     return np.sqrt(np.clip(mvSqr_map - mvmap**2, 0, 1e100)) / 1e3
 
 
-# function that returns the limits for the colormap
+# function that returns the default limits for the colormap if none are provided
 def cmap_default_limits(map):
     return [0.3, 30]

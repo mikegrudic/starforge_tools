@@ -21,6 +21,6 @@ def render(pdata: dict, meshoid: Meshoid, mapargs: dict):
 
 # function that returns the limits for the colormap
 def cmap_default_limits(map):
-    """For surface density map: choose limits that leave 99% of the mass unsaturated in the colormap"""
+    """For surface density map: choose limits that leave 98% of the mass unsaturated in the colormap"""
     flatmap = np.sort(map.flatten())
     return np.interp([0.01, 0.99], flatmap.cumsum() / flatmap.sum(), flatmap)

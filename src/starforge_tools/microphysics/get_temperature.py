@@ -1,5 +1,6 @@
 import numpy as np
 
+
 # This code is copied almost verbatim from Phil Hopkins' GIZMO analysis scripts: https://bitbucket.org/phopkins/pfh_python/
 ## return temperature from internal energy, helium fraction, electron abundance, total metallicity, and density
 def get_temperature(
@@ -77,5 +78,11 @@ def get_temperature_from_snapshot(F):
     f_molec = F["PartType0/MolecularMassFraction"][:]
 
     return get_temperature(
-        internal_egy_code, helium_mass_fraction, electron_abundance, total_metallicity, mass_density, f_neutral, f_molec
+        internal_egy_code,
+        helium_mass_fraction,
+        electron_abundance,
+        total_metallicity,
+        mass_density,
+        f_neutral,
+        f_molec,
     )

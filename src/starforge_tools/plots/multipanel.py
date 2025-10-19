@@ -16,20 +16,13 @@ import rendermaps
 
 DEFAULT_MAPS = ("SurfaceDensity", "VelocityDispersion", "MassWeightedTemperature", "AlfvenSpeed")
 
-# MINIMAL_DATAFIELDS = set(("PartType0/Masses", "PartType0/Coordinates", "PartType0/SmoothingLength"))
-# REQUIRED_DATAFIELDS = {
-# "SurfaceDensity": MINIMAL_DATAFIELDS,
-# "VelocityDispersion": MINIMAL_DATAFIELDS.union(("PartType0/Velocities",)),
-# "MassWeightedTemperature": MINIMAL_DATAFIELDS.union(("PartType0/Temperature",)),
-# "AlfvenSpeed": MINIMAL_DATAFIELDS.union(("PartType0/MagneticField", "PartType0/Density")),
-# }
-
 
 def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
     """Does the I/O to get the data required for the specified maps"""
     required_data = set.union(*[getattr(rendermaps, s).required_datafields for s in maps])
     snapdata = {}
     with h5py.File(snapshot_path, "r") as F:
+        snapdata["Header"] = dict(F["Header"].attrs)
         for i in range(6):
             s = f"PartType{i}"
             if s not in F.keys():
@@ -51,7 +44,6 @@ def get_snapshot_units(F):
 
 
 def get_snapshot_timeline(output_dir, verbose=False):
-    print(output_dir)
     times = []
     snappaths = []
     if verbose:
@@ -77,31 +69,41 @@ def get_snapshot_timeline(output_dir, verbose=False):
     return np.array(snappaths), np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
 
 
-def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=1024, length=20):
+def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=2048, box_frac=0.24):
     snappaths, snaptimes = get_snapshot_timeline(output_dir)
 
     if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced
         snaps = snappaths[:: len(snappaths) // (times - 1)]
         times = snaptimes[:: len(snaptimes) // (times - 1)]
     elif len(times):  # eventually implement nearest-neighbor snapshots of specified times
-        _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
+        ngb_time, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
+        times = ngb_time
         snaps = snappaths[ngb_idx]
     else:
         raise NotImplementedError("Format not recognized for supplied times for multipanel map.")
 
     num_maps, num_times = len(maps), len(times)
     fig, ax = plt.subplots(num_maps, num_times, figsize=(8, 8))
-    mapargs = {"size": length, "res": res}
-    X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
     for i in range(len(times)):
         pdata = get_pdata_for_maps(snaps[i], maps)
+        boxsize = pdata["Header"]["BoxSize"]
+        length = boxsize * box_frac
+        mapargs = {"size": length, "res": res}
+        X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
+        if "PartType5/Masses" in pdata:
+            SFE = pdata["PartType5/Masses"].sum() / (0.8 * pdata["PartType0/Masses"].sum())
+        else:
+            SFE = 0
+        ax[0, i].set(title=f"{round(times[i],1)}Myr, SFE={round(SFE*100,0)}\%")
         renderer = MapRenderer(pdata, mapargs)
         for j, mapname in enumerate(maps):
+            axes = ax[j, i]
             render = renderer.get_render(mapname)
             limits = renderer.limits[mapname]
             cmap = renderer.cmap[mapname]
-            ax[j, i].pcolormesh(X, Y, render, norm=colors.LogNorm(*limits), cmap=cmap)
+            axes.pcolormesh(X, Y, render, norm=colors.LogNorm(*limits), cmap=cmap)
 
+    fig.subplots_adjust(hspace=-0.0, wspace=0)
     plt.savefig("multipanel.png")
 
 

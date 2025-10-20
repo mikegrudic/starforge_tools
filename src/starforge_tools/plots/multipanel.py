@@ -13,8 +13,72 @@ from scipy.spatial import KDTree
 import numpy as np
 from .map_renderer import MapRenderer
 import rendermaps
+import matplotlib.axes as maxes
 
-DEFAULT_MAPS = ("SurfaceDensity", "VelocityDispersion", "MassWeightedTemperature", "AlfvenSpeed")
+DEFAULT_MAPS = (
+    "SurfaceDensity",
+    "VelocityDispersion",
+    "MassWeightedTemperature",
+    "AlfvenSpeed",
+    #  "XCoordinate",
+    #  "ZCoordinate",
+)
+
+
+star_colors = (
+    np.array([[255, 203, 132], [255, 243, 233], [155, 176, 255]]) / 255
+)  # default colors, reddish for small ones, yellow-white for mid sized and blue for large
+
+
+def plot_stars(ax, pdata):
+    xs = pdata["PartType5/Coordinates"]
+    ms = pdata["PartType5/BH_Mass"]
+    xs, ms = xs[ms.argsort()][::-1], np.sort(ms)[::-1]
+    starcolors = np.array([np.interp(np.log10(ms), [-1, 0, 1], star_colors[:, i]) for i in range(3)]).T
+    ax.scatter(
+        xs[:, 0],
+        xs[:, 1],
+        s=4 * (ms / 1) ** (0.5),
+        edgecolor="black",
+        facecolor=starcolors,
+        marker="*",
+        lw=0.02,
+        alpha=1,
+    )
+
+
+def plot_star_legend(ax):
+    for m_dummy in 0.1, 1, 10, 100:
+        ax.scatter(
+            [np.inf],
+            [np.inf],
+            s=4 * (m_dummy) ** (0.5),
+            color=[np.interp(np.log10(m_dummy), [-1, 0, 1], star_colors[:, i]) for i in range(3)],
+            label=r"$%gM_\odot$" % m_dummy,
+            edgecolor="black",
+            alpha=1,
+            lw=0.02,
+            marker="*",
+        )
+    ledge = ax.legend(loc=2, frameon=True, facecolor="black", labelspacing=0.1, fontsize=6, edgecolor="white")
+    ledge.get_frame().set_linewidth(0.5)
+    ledge.get_frame().set_alpha(0.5)
+    for text in ledge.get_texts():
+        text.set_color("white")
+
+
+def colorbar(mappable, label=None):
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
+    import matplotlib.pyplot as plt
+
+    last_axes = plt.gca()
+    ax = mappable.axes
+    fig = ax.figure
+    divider = make_axes_locatable(ax)
+    cax = divider.append_axes("right", size="5%", pad=0.0, axes_class=maxes.Axes)
+    cbar = fig.colorbar(mappable, cax=cax, label=label)
+    plt.sca(last_axes)
+    return cbar
 
 
 def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
@@ -29,8 +93,15 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
                 continue
             for k in F[s].keys():
                 s2 = s + "/" + k
-                if s2 in required_data or i == 5:
+                if s2 in required_data or i == 5:  # always get star data because it doesn't take much space
                     snapdata[s2] = F[s2][:]
+
+                    # transformation so we are projecting to the x-z plane
+                    data = snapdata[s2]
+                    if len(data.shape) == 2 and data.shape[-1] == 3:
+                        snapdata[s2] = np.c_[data[:, 0], data[:, 2], data[:, 1]]
+                    if "Coordinates" in s2:
+                        snapdata[s2] -= snapdata["Header"]["BoxSize"] * 0.5
 
     return snapdata
 
@@ -69,42 +140,84 @@ def get_snapshot_timeline(output_dir, verbose=False):
     return np.array(snappaths), np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
 
 
-def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=2048, box_frac=0.24):
+def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=1024, box_frac=0.24):
     snappaths, snaptimes = get_snapshot_timeline(output_dir)
 
     if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced
         snaps = snappaths[:: len(snappaths) // (times - 1)]
         times = snaptimes[:: len(snaptimes) // (times - 1)]
     elif len(times):  # eventually implement nearest-neighbor snapshots of specified times
-        ngb_time, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
-        times = ngb_time
+        _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
+        times = snaptimes[ngb_idx]
         snaps = snappaths[ngb_idx]
     else:
         raise NotImplementedError("Format not recognized for supplied times for multipanel map.")
 
     num_maps, num_times = len(maps), len(times)
-    fig, ax = plt.subplots(num_maps, num_times, figsize=(8, 8))
-    for i in range(len(times)):
+    fig, ax = plt.subplots(
+        num_maps,
+        num_times,
+        figsize=(8, 8),
+        gridspec_kw={
+            "width_ratios": (num_times - 1)
+            * [
+                0.95,
+            ]
+            + [1]
+        },
+    )  # , sharex=True, sharey=True)  # , layout="constrained")
+    print(ax.shape)
+    if num_times == 1:
+        ax = np.atleast_2d(ax).T
+    print(ax.shape)
+    for i, t in enumerate(times):
         pdata = get_pdata_for_maps(snaps[i], maps)
         boxsize = pdata["Header"]["BoxSize"]
         length = boxsize * box_frac
-        mapargs = {"size": length, "res": res}
+        mapargs = {"size": length, "res": res, "center": np.zeros(3)}
         X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
+        X, Y = np.meshgrid(X, Y, indexing="xy")
         if "PartType5/Masses" in pdata:
             SFE = pdata["PartType5/Masses"].sum() / (0.8 * pdata["PartType0/Masses"].sum())
         else:
             SFE = 0
-        ax[0, i].set(title=f"{round(times[i],1)}Myr, SFE={round(SFE*100,0)}\%")
+        ax[0, i].set(title=rf"{t.to_string(precision=1)}, SFE=${round(SFE*100,0)}\%$")
         renderer = MapRenderer(pdata, mapargs)
         for j, mapname in enumerate(maps):
             axes = ax[j, i]
-            render = renderer.get_render(mapname)
-            limits = renderer.limits[mapname]
-            cmap = renderer.cmap[mapname]
-            axes.pcolormesh(X, Y, render, norm=colors.LogNorm(*limits), cmap=cmap)
+            axes.set_aspect("equal")
+            render, limits, cmap, label = renderer.get_render_items(mapname)
+            if limits[0]:
+                if limits[0] < 0 or np.log10(limits[1] / limits[0]) < 1:
+                    norm = None
+                else:
+                    norm = colors.LogNorm(*limits)
+                    limits[0] = limits[1] = None
+            else:
+                norm = None
+            pcm = axes.pcolormesh(X, Y, render, norm=norm, cmap=cmap, label=label, vmin=limits[0], vmax=limits[1])
+            #            divider = make_axes_locatable(axes)
+            if t == times[-1]:
+                colorbar(pcm, label=label)
+            if i == 0:
+                axes.set(ylabel=r"$z\rm  \,\left(pc\right)$")
+                if j == 0:
+                    plot_star_legend(axes)
+            if j == num_maps - 1:
+                axes.set(xlabel=r"$x\rm  \,\left(pc\right)$")  # ,ylabel=r'$\rm Y \,\left(pc\right)$')
+            if i > 0:  # and j < num_maps - 1:
+                axes.set_yticklabels([])
+            if j < num_maps - 1:
+                axes.set_xticklabels([])
 
-    fig.subplots_adjust(hspace=-0.0, wspace=0)
-    plt.savefig("multipanel.png")
+            if "PartType5/Masses" in pdata:
+                plot_stars(axes, pdata)
+
+            axes.set(xlim=[-0.5 * length, 0.5 * length], ylim=[-0.5 * length, 0.5 * length])
+
+    #    fig.tight_layout(h_pad=0, w_pad=0)
+    fig.subplots_adjust(hspace=0.0, wspace=0)
+    plt.savefig("multipanel.png")  # , bbox_inches="tight")
 
 
 # rmax = 12

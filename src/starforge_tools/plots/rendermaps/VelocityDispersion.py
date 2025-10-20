@@ -17,11 +17,11 @@ colormap = "magma"
 # a meshoid constructed from the data, and arguments to meshoid rendering functions
 def render(pdata: dict, meshoid: Meshoid, mapargs: dict):
     sigma = meshoid.SurfaceDensity(pdata["PartType0/Masses"], **mapargs)
-    mvSqr_map = (
+    vSqr_map = (
         meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2] ** 2, **mapargs) / sigma
     )
-    mvmap = meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2], **mapargs) / sigma
-    return np.sqrt(np.clip(mvSqr_map - mvmap**2, 0, 1e100)) / 1e3
+    vmap = meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2], **mapargs) / sigma
+    return np.sqrt(np.clip(vSqr_map - vmap**2, 0, 1e100)) / 1e3
 
 
 # function that returns the default limits for the colormap if none are provided

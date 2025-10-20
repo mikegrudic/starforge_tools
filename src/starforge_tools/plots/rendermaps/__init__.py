@@ -1,1 +1,1 @@
-from . import SurfaceDensity, AlfvenSpeed, MassWeightedTemperature, VelocityDispersion
+from . import SurfaceDensity, AlfvenSpeed, MassWeightedTemperature, VelocityDispersion, XCoordinate, ZCoordinate

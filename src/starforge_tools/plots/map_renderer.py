@@ -7,22 +7,32 @@ import rendermaps
 
 
 class MapRenderer:
-    def __init__(self, pdata: dict, mapargs: dict):
+    def __init__(self, pdata: dict, mapargs: dict, verbose=True):
         self.pdata = pdata
         self.meshoid = Meshoid(
-            pdata["PartType0/Coordinates"], pdata["PartType0/Masses"], pdata["PartType0/SmoothingLength"]
+            pdata["PartType0/Coordinates"],
+            pdata["PartType0/Masses"],
+            pdata["PartType0/SmoothingLength"],
+            verbose=verbose,
         )
         self.mapargs = mapargs
         self.rendered_maps = {}
         self.limits = {}
         self.cmap = {}
+        self.labels = {}
 
     def render_map(self, map_name: str):
         self.check_if_map_implemented(map_name)
         map = getattr(rendermaps, map_name)
-        self.rendered_maps[map_name] = map.render(self.pdata, self.meshoid, self.mapargs)
+        self.rendered_maps[map_name] = map.render(
+            self.pdata, self.meshoid, self.mapargs
+        ).T  # .T to work with coordinate conventions
         self.limits[map_name] = map.cmap_default_limits(self.rendered_maps[map_name])
         self.cmap[map_name] = map.colormap
+        self.labels[map_name] = map.plotlabel
+
+    def get_render_items(self, map_name: str):
+        return self.get_render(map_name), self.limits[map_name], self.cmap[map_name], self.labels[map_name]
 
     def get_render(self, map_name: str) -> np.ndarray:
         self.check_if_map_implemented(map_name)

@@ -1,9 +1,11 @@
 API Documentation
 =================
 
-.. automodule:: starforge_tools.plots.multipanel
+.. automodule:: starforge_tools.plots
     :members:
+    :undoc-members:
 
-.. automodule:: starforge_tools.microphysics.nonideal_mhd
+.. automodule:: starforge_tools.microphysics
     :members:
+    :undoc-members:
        

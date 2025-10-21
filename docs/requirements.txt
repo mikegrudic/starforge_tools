@@ -7,3 +7,4 @@ astropy
 meshoid
 natsort
 h5py
+matplotlib

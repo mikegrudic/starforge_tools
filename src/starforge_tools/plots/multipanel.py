@@ -14,7 +14,7 @@ import numpy as np
 from .map_renderer import MapRenderer
 from .add_colorbar import add_colorbar
 from .star_markers import plot_star_markers, plot_star_legend
-import rendermaps
+from . import rendermaps
 
 DEFAULT_MAPS = (
     "SurfaceDensity",

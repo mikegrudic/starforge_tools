@@ -3,7 +3,7 @@
 
 from meshoid import Meshoid
 import numpy as np
-import rendermaps
+from . import rendermaps
 
 
 class MapRenderer:

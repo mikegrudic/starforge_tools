@@ -1,11 +1,9 @@
 API Documentation
 =================
 
-.. automodule:: starforge_tools.plots
+.. automodule:: starforge_tools.plots.multipanel
     :members:
-    :undoc-members:
 
 .. automodule:: starforge_tools.microphysics
     :members:
-    :undoc-members:
        

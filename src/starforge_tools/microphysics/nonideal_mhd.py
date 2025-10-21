@@ -1,3 +1,5 @@
+"""Routine for computing non-ideal MHD coefficients from simulation data in post-processing"""
+
 import numpy as np
 
 GRAVITY_G_CGS = 6.672e-8

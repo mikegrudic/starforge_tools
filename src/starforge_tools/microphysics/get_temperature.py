@@ -1,3 +1,5 @@
+"""Routines for post-processing temperature from internal energy"""
+
 import numpy as np
 
 

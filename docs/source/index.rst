@@ -43,7 +43,7 @@ STARFORGE Documentation
 
 .. toctree::
    :maxdepth: 2
-   :caption: Python package:
+   :caption: Python package
    
    API
 

@@ -7,7 +7,7 @@ import rendermaps
 
 
 class MapRenderer:
-    def __init__(self, pdata: dict, mapargs: dict, verbose=True):
+    def __init__(self, pdata: dict, mapargs: dict, verbose=False):
         self.pdata = pdata
         self.meshoid = Meshoid(
             pdata["PartType0/Coordinates"],
@@ -24,9 +24,7 @@ class MapRenderer:
     def render_map(self, map_name: str):
         self.check_if_map_implemented(map_name)
         map = getattr(rendermaps, map_name)
-        self.rendered_maps[map_name] = map.render(
-            self.pdata, self.meshoid, self.mapargs
-        ).T  # .T to work with coordinate conventions
+        self.rendered_maps[map_name] = map.render(self.pdata, self.meshoid, self.mapargs)
         self.limits[map_name] = map.cmap_default_limits(self.rendered_maps[map_name])
         self.cmap[map_name] = map.colormap
         self.labels[map_name] = map.plotlabel

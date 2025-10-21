@@ -1,4 +1,4 @@
-"""Gas surface density map"""
+"""Mass-weighted RMS Alfven speed map"""
 
 from meshoid import Meshoid
 import numpy as np
@@ -9,7 +9,7 @@ required_datafields = {
     "PartType0/SmoothingLength",
     "PartType0/MagneticField",
 }  # additional datafields beyond just the basic coordinates and smoothing length
-plotlabel = r"$v_{\rm A,RMS}\,\left(\rm km\,s^{-1}\right)$"
+plotlabel = r"$v_{\rm A}\,\left(\rm km\,s^{-1}\right)$"
 colormap = "RdYlBu"
 
 

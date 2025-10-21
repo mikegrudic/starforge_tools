@@ -12,73 +12,18 @@ from astropy import units as u
 from scipy.spatial import KDTree
 import numpy as np
 from .map_renderer import MapRenderer
+from .add_colorbar import add_colorbar
+from .star_markers import plot_star_markers, plot_star_legend
 import rendermaps
-import matplotlib.axes as maxes
 
 DEFAULT_MAPS = (
     "SurfaceDensity",
     "VelocityDispersion",
     "MassWeightedTemperature",
     "AlfvenSpeed",
-    #  "XCoordinate",
+    #    "XCoordinate",
     #  "ZCoordinate",
 )
-
-
-star_colors = (
-    np.array([[255, 203, 132], [255, 243, 233], [155, 176, 255]]) / 255
-)  # default colors, reddish for small ones, yellow-white for mid sized and blue for large
-
-
-def plot_stars(ax, pdata):
-    xs = pdata["PartType5/Coordinates"]
-    ms = pdata["PartType5/BH_Mass"]
-    xs, ms = xs[ms.argsort()][::-1], np.sort(ms)[::-1]
-    starcolors = np.array([np.interp(np.log10(ms), [-1, 0, 1], star_colors[:, i]) for i in range(3)]).T
-    ax.scatter(
-        xs[:, 0],
-        xs[:, 1],
-        s=4 * (ms / 1) ** (0.5),
-        edgecolor="black",
-        facecolor=starcolors,
-        marker="*",
-        lw=0.02,
-        alpha=1,
-    )
-
-
-def plot_star_legend(ax):
-    for m_dummy in 0.1, 1, 10, 100:
-        ax.scatter(
-            [np.inf],
-            [np.inf],
-            s=4 * (m_dummy) ** (0.5),
-            color=[np.interp(np.log10(m_dummy), [-1, 0, 1], star_colors[:, i]) for i in range(3)],
-            label=r"$%gM_\odot$" % m_dummy,
-            edgecolor="black",
-            alpha=1,
-            lw=0.02,
-            marker="*",
-        )
-    ledge = ax.legend(loc=2, frameon=True, facecolor="black", labelspacing=0.1, fontsize=6, edgecolor="white")
-    ledge.get_frame().set_linewidth(0.5)
-    ledge.get_frame().set_alpha(0.5)
-    for text in ledge.get_texts():
-        text.set_color("white")
-
-
-def colorbar(mappable, label=None):
-    from mpl_toolkits.axes_grid1 import make_axes_locatable
-    import matplotlib.pyplot as plt
-
-    last_axes = plt.gca()
-    ax = mappable.axes
-    fig = ax.figure
-    divider = make_axes_locatable(ax)
-    cax = divider.append_axes("right", size="5%", pad=0.0, axes_class=maxes.Axes)
-    cbar = fig.colorbar(mappable, cax=cax, label=label)
-    plt.sca(last_axes)
-    return cbar
 
 
 def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
@@ -107,14 +52,42 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
 
 
 def get_snapshot_units(F):
+    """Given an h5py file instance for a snapshot, returns a dictionary
+    whose entries are astropy quantities giving the unit length, speed, mass, and magnetic field for the snapshot.
+
+    Parameters
+    ----------
+    F: h5py.File
+        h5py file instance for the snapshot
+    Returns:
+        Dictionary with keys "Length", "Speed", "Mass", and "MagneticField" giving the unit quantities for the simulation.
+    """
     unit_length = F["Header"].attrs["UnitLength_In_CGS"] * u.cm
     unit_speed = F["Header"].attrs["UnitVelocity_In_CGS"] * u.cm / u.s
     unit_mass = F["Header"].attrs["UnitMass_In_CGS"] * u.g
-    unit_magnetic_field = 1e4 * u.gauss
+    unit_magnetic_field = 1e4 * u.gauss  # hardcoded right now, can we actually get this from the header???
     return {"Length": unit_length, "Speed": unit_speed, "Mass": unit_mass, "MagneticField": unit_magnetic_field}
 
 
-def get_snapshot_timeline(output_dir, verbose=False):
+def get_snapshot_timeline(output_dir, verbose=False, unit=None, cache_timeline=True):
+    """Given a simulation directory, does a pass through the present HDF5 snapshots
+    and compiles a list of snapshot paths and their associated
+
+    Parameters
+    ----------
+    output_dir: string
+        Path of the directory containing the snapshots
+    verbose: boolean, optional
+        Whether to print verbose status updates
+    unit: astropy.units.core.PrefixUnit, optional
+        Time unit to convert snapshot times to (default: Myr)
+    cache_timeline: boolean, optional
+        Whether to cache the timeline for future lookup in a file output_dir + "/.timeline" (default: True)
+
+    Returns
+    -------
+    Tuple containing 2 arrays containing the list of snapshot paths and the corresponding times
+    """
     times = []
     snappaths = []
     if verbose:
@@ -137,71 +110,133 @@ def get_snapshot_timeline(output_dir, verbose=False):
     if verbose:
         print("Done!")
     np.save(timelinepath, np.array(times))
-    return np.array(snappaths), np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
+    times = np.array(times) * (units["Length"] / units["Speed"]).to(u.Myr)
+    dt_units = (times.max() - times.min()).value
+    if dt_units > 1000:
+        times = times.to(u.Gyr)
+    elif dt_units < 0.5:
+        times = times.to(u.kyr)
+    return np.array(snappaths), times
 
 
-def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=1024, box_frac=0.24):
+def multipanel_timelapse_map(
+    output_dir=".",
+    maps=DEFAULT_MAPS,
+    times=4,
+    res=1024,
+    box_frac=0.24,
+    colorbar_frac=0.05,
+    figsize=(8, 8),
+    plot_stars=True,
+    SFE_in_title=True,
+    relative_times=True,
+    cmap_limits={},
+):
+    """Make a multi-panel map where rows plot a certain kind of coloarmap plot with colorbar, and
+    each column is a certain simulation time.
+
+    Parameters
+    ----------
+    output_dir: string, optional
+        Directory path where the simulation snapshots are
+    maps: iterable, optional
+        Iterable of which maps to plot in each row. Defaults to plotting surface density, velocity dispersion,
+        temperature, and magnetic energy fraction.
+
+        Each entry must be an object defined in starforge_tools.plots.rendermaps with attributes plotlabel,
+        required_datafields, colormap, render, and cmap_default_limits. See e.g. starforge_tools.plots.rendermaps.SurfaceDensity
+    times: optional
+        Either an integer number of evenly-spaced simulation times for each column, or an array_like of simulation times in
+        whatever units the snapshots are in, or as an astropy quantity. If the exact simulation times are not available,
+        selects the closest possible time. (default: 4)
+    res: int, optional
+        Resolution of the maps (default: 1024)
+    box_frac: float or array_like, optional
+        Fraction of the total box size that the maps will plot
+    colorbar_frac: float, optional
+        Width of the colorbar relative to panel size (default: 0.1)
+    figsize: tuple, optional
+        Size of figure in inches (default: (8,8))
+    plot_stars: boolean, optional
+        Whether to plot star markers (default: True)
+    SFE_in_title: boolean, optional
+        Whether to plot SFE in the column titles in addition to the time (default: True)
+    relative_times: boolean, optional
+        Whether specified times are relative to that of the first snapshot (default: True)
+    limits: dict, optional
+        Dictionary wholes keys are the names of rendermaps and whose entries are shape (2,) tuples specifying the
+        upper and lower limits of the colormap, overriding the default.
+    """
     snappaths, snaptimes = get_snapshot_timeline(output_dir)
+    if relative_times:
+        snaptimes -= snaptimes[0]
 
-    if isinstance(times, int):  # if we specified an integer number of times, assume evenly-spaced
-        snaps = snappaths[:: len(snappaths) // (times - 1)]
-        times = snaptimes[:: len(snaptimes) // (times - 1)]
-    elif len(times):  # eventually implement nearest-neighbor snapshots of specified times
-        _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
-        times = snaptimes[ngb_idx]
-        snaps = snappaths[ngb_idx]
-    else:
-        raise NotImplementedError("Format not recognized for supplied times for multipanel map.")
+    if isinstance(times, int):  # if we specified an integer number of times,
+        # snaps = snappaths[:: len(snappaths) // (times - 1)]
+        times = np.linspace(snaptimes.min(), snaptimes.max(), times)  # snaptimes[:: len(snaptimes) // (times - 1)]
+    # elif len(times):  # nearest-neighbor snapshots of specified times
+    _, ngb_idx = KDTree(np.c_[snaptimes]).query(np.c_[times])
+    times = snaptimes[ngb_idx]
+    snaps = snappaths[ngb_idx]
+    # else:
+    # raise NotImplementedError("Format not recognized for supplied times for multipanel map.")
 
     num_maps, num_times = len(maps), len(times)
-    fig, ax = plt.subplots(
-        num_maps,
-        num_times,
-        figsize=(8, 8),
-        gridspec_kw={
-            "width_ratios": (num_times - 1)
-            * [
-                0.95,
-            ]
-            + [1]
-        },
-    )  # , sharex=True, sharey=True)  # , layout="constrained")
-    print(ax.shape)
+
+    if isinstance(box_frac, float):
+        box_frac = np.repeat(box_frac, num_times)
+
+    # re-scaling the first N-1 panels so that they are all the
+    # same size when the colorbar rescales the panel hosting the bar
+    # I will burn for eternity for this.
+    width_ratios = (num_times - 1) * [1 / (1 + colorbar_frac)] + [1]  # EVIL GROSS DON'T DO THIS
+    fig, ax = plt.subplots(num_maps, num_times, figsize=figsize, gridspec_kw={"width_ratios": width_ratios})
+
     if num_times == 1:
         ax = np.atleast_2d(ax).T
-    print(ax.shape)
+
     for i, t in enumerate(times):
         pdata = get_pdata_for_maps(snaps[i], maps)
         boxsize = pdata["Header"]["BoxSize"]
-        length = boxsize * box_frac
+        length = boxsize * box_frac[i]
         mapargs = {"size": length, "res": res, "center": np.zeros(3)}
         X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
-        X, Y = np.meshgrid(X, Y, indexing="xy")
+        X, Y = np.meshgrid(X, Y, indexing="ij")
         if "PartType5/Masses" in pdata:
             SFE = pdata["PartType5/Masses"].sum() / (0.8 * pdata["PartType0/Masses"].sum())
         else:
             SFE = 0
-        ax[0, i].set(title=rf"{t.to_string(precision=1)}, SFE=${round(SFE*100,0)}\%$")
+
+        title = t.to_string(formatter="%4.3g", format="latex")
+        if SFE_in_title:
+            title += rf", SFE=${round(SFE*100,0)}\%$"
+        ax[0, i].set_title(title)
+
         renderer = MapRenderer(pdata, mapargs)
         for j, mapname in enumerate(maps):
             axes = ax[j, i]
             axes.set_aspect("equal")
-            render, limits, cmap, label = renderer.get_render_items(mapname)
+            render, default_limits, cmap, label = renderer.get_render_items(mapname)
+            if mapname in cmap_limits:
+                limits = cmap_limits[mapname]
+            else:
+                limits = default_limits
+
             if limits[0]:
                 if limits[0] < 0 or np.log10(limits[1] / limits[0]) < 1:
                     norm = None
                 else:
                     norm = colors.LogNorm(*limits)
-                    limits[0] = limits[1] = None
+                    vmin = vmax = None
             else:
                 norm = None
-            pcm = axes.pcolormesh(X, Y, render, norm=norm, cmap=cmap, label=label, vmin=limits[0], vmax=limits[1])
-            #            divider = make_axes_locatable(axes)
-            if t == times[-1]:
-                colorbar(pcm, label=label)
+                vmin, vmax = limits
+            pcm = axes.pcolormesh(X, Y, render, norm=norm, cmap=cmap, label=label, vmin=vmin, vmax=vmax)
+            if i == num_times - 1:
+                add_colorbar(pcm, label=label, size=str(100 * colorbar_frac) + "%")
             if i == 0:
                 axes.set(ylabel=r"$z\rm  \,\left(pc\right)$")
-                if j == 0:
+                if plot_stars and j == 0:
                     plot_star_legend(axes)
             if j == num_maps - 1:
                 axes.set(xlabel=r"$x\rm  \,\left(pc\right)$")  # ,ylabel=r'$\rm Y \,\left(pc\right)$')
@@ -210,123 +245,11 @@ def multipanel_timelapse_map(output_dir=".", maps=DEFAULT_MAPS, times=4, res=102
             if j < num_maps - 1:
                 axes.set_xticklabels([])
 
-            if "PartType5/Masses" in pdata:
-                plot_stars(axes, pdata)
+            if "PartType5/Masses" in pdata and plot_stars:
+                plot_star_markers(axes, pdata)
 
             axes.set(xlim=[-0.5 * length, 0.5 * length], ylim=[-0.5 * length, 0.5 * length])
 
-    #    fig.tight_layout(h_pad=0, w_pad=0)
-    fig.subplots_adjust(hspace=0.0, wspace=0)
+    # fig.tight_layout(h_pad=0, w_pad=0)
+    fig.subplots_adjust(hspace=-0.0, wspace=0.0)
     plt.savefig("multipanel.png")  # , bbox_inches="tight")
-
-
-# rmax = 12
-# res = 2048
-
-# cmap = 'magma'
-
-# fig, axes = plt.subplots(4,4,figsize=(8,8),sharex=True,sharey=True)
-
-# axes[0,0].set(xlim=[-rmax,rmax], ylim=[-rmax,rmax])
-# axes[0,0].set_aspect('equal')
-# fig.subplots_adjust(hspace=-0.0,wspace=0)
-
-# for j in range(4):
-#     mass, B, v, pos, hsml, xs, mstar, T, vA = masses[j], Bs[j], vs[j], positions[j], hsmls[j], xss[j], mstars[j], Ts[j], vAs[j]
-#     print(mass.shape, B.shape)
-#     time = 979 * h5py.File(snaps[j],'r')["Header"].attrs["Time"]
-#     xs, mstar = xs[mstar.argsort()][::-1], np.sort(mstar)[::-1]
-#     SFE = mstar.sum() / 2e4
-#     starcolors = np.array([np.interp(np.log10(mstar),[-1,0,1],star_colors[:,i]) for i in range(3)]).T
-#     X = Y = np.linspace(-rmax, rmax, res+1)
-#     X, Y = np.meshgrid(X, Y)
-
-#     filename = "maps_%d_res%d.pickle"%(j,res)
-#     if not isfile(filename):
-#         hsml = np.clip(hsml,(2*rmax/res),1e100)
-#         M = Meshoid(pos,mass,hsml,n_jobs=-1)
-#         zmax = 20
-#         sigma_gas = M.SurfaceDensity(center=np.array([0,0,0]),size=2*rmax,res=res).T
-#         sigma_v = M.SurfaceDensity(mass*v[:,2]**2*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         v_avg = M.SurfaceDensity(mass*v[:,2]*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         v_avg = M.SurfaceDensity(mass*v[:,2]*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         vx = M.SurfaceDensity(mass*v[:,0]*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         vy = M.SurfaceDensity(mass*v[:,1]*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         sigma_v = (sigma_v - v_avg**2)**0.5
-#         temp = M.SurfaceDensity(mass*T*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         Bmap = M.SurfaceDensity(mass*np.sum(vA**2,axis=1)*(np.abs(pos[:,2])<zmax),center=np.array([0,0,0]),size=2*rmax,res=res).T/sigma_gas
-#         Q =  M.SurfaceDensity(mass*(B[:,0]**2-B[:,1]**2)/np.sum(B**2,axis=1),center=np.array([0,0,0]),size=2*rmax,res=res).T
-#         U =  M.SurfaceDensity(mass*2*B[:,0]*B[:,1]/np.sum(B**2,axis=1),center=np.array([0,0,0]),size=2*rmax,res=res).T
-#         with open(filename,'wb') as f: pickle.dump([sigma_gas,sigma_v,vx,vy,temp,Bmap,Q,U],f)
-#     else:
-#         with open(filename,'rb') as f: sigma_gas,sigma_v,vx,vy,temp,Bmap,Q,U = pickle.load(f)
-
-#     for i in range(4):
-#         cmap = {0: "viridis",1:"magma",2:"plasma",3:"RdYlBu"}[i]
-#         limits = {0: [1,1e3], 1:[0.1,30], 2:[10,3e5], 3:[0.1,30]}[i]
-#         ax = axes[i,j]
-#         ax.set_aspect('equal')
-#         if i==0:
-#             p = ax.pcolormesh(X, Y, sigma_gas,norm=colors.LogNorm(vmin=limits[0],vmax=limits[1]),cmap=cmap,zorder=-1000);
-#             ax.set_title("%3.2gMyr, SFE=%3.2g\%%"%(time,SFE*100))
-#         if i==1:
-#             p = ax.pcolormesh(X, Y, sigma_v,norm=colors.LogNorm(vmin=limits[0],vmax=limits[1]),cmap=cmap,zorder=-1000);
-#             #tex = runlic(vX, vY,300)
-#             #tex = 0.5 + (tex-tex.mean())/1.5
-#             tex = get_lic_image(vx,vy)
-#             tex = (tex-tex.min())/(tex.max()-tex.min())*0.4 + 0.5
-#             color = plt.get_cmap(cmap)(np.log10(sigma_v/0.1)/2)
-#             img = color*tex #LightSource().blend_hsv(color, tex)
-#             ax.imshow(img[::-1],extent=(-rmax,rmax,-rmax,rmax))
-#         if i==2: p = ax.pcolormesh(X, Y, temp, norm=colors.LogNorm(vmin=limits[0],vmax=limits[1]),cmap=cmap,zorder=-1000)
-#         if i==3:
-#             from matplotlib.colors import ListedColormap
-#             import numpy as np
-#             colombi1_cmap = ListedColormap(np.loadtxt("planck_parchment_rgb.txt")[::-1]/255.)
-#             p = ax.pcolormesh(X, Y, Bmap ,cmap=colombi1_cmap ,norm=colors.LogNorm(vmin=limits[0],vmax=limits[1]),zorder=-1000)
-#             phi = 0.5 * np.arctan2(U,Q)
-
-#             vX, vY = np.cos(phi), np.sin(phi)
-#             tex = get_lic_image(vX,vY)
-#             #tex = (tex-tex.min())/(tex.max()-tex.min())#*0.5 + 0.5
-#             color = plt.get_cmap(colombi1_cmap)(np.log10(Bmap/limits[0])/np.log10(limits[1]/limits[0]))
-#             #img = tex  # color * (1+0.3*tex) #LightSource().blend_hsv(color, tex)
-#             #ax.imshow(color[::-1,:,:-1]*tex[::-1][:,:,:-1],extent=(-rmax,rmax,-rmax,rmax),zorder=100)
-#             #ax.imshow(color[::-1,:,:-1]+(1-tex[::-1][:,:,:-1]),extent=(-rmax,rmax,-rmax,rmax),zorder=100)
-#             ax.imshow(color[::-1,:]*(tex[::-1]),extent=(-rmax,rmax,-rmax,rmax),zorder=0)
-#             #X2 = Y2 = np.linspace(-rmax, rmax, res)
-#             #X2, Y2 = np.meshgrid(X2, Y2)
-#             #p2 = ax.streamplot(X2,Y2, vX,vY, color='black',linewidth=0.1,arrowsize=0,density=3,zorder=-1)
-#         if i==3: ax.set(xlabel=r'$x\rm  \,\left(pc\right)$')#,ylabel=r'$\rm Y \,\left(pc\right)$')
-#         if j==0: ax.set(ylabel=r'$z\rm  \,\left(pc\right)$')
-#         ax.scatter(xs[:,0],xs[:,1],s=4*(mstar/1)**(0.5),edgecolor='black',facecolor=starcolors,marker='*',lw=0.02,alpha=1)
-#         if i==0 and j==0:
-#             for m_dummy in 0.1,1,10,100:
-#                 ax.scatter([-100,],[-100],s=4*(m_dummy)**(0.5), color=[np.interp(np.log10(m_dummy),[-1,0,1],star_colors[:,i]) for i in range(3)],label=r"$%gM_\odot$"%m_dummy,edgecolor='black',alpha=1,lw=0.02,marker='*')
-#             ledge = ax.legend(loc=2,frameon=True,facecolor='black',labelspacing=0.1,fontsize=6,edgecolor='white')
-#             ledge.get_frame().set_linewidth(0.5)
-#             ledge.get_frame().set_alpha(0.5)
-#             for text in ledge.get_texts(): text.set_color("white")
-#         if i==0 and j==3:
-#             addColorbar(ax,cmap,limits[0],limits[1],r"$\Sigma_{\rm gas}$ $(\rm M_\odot\,\rm pc^{-2})$",logflag=1,span_full_figure=False,tick_tuple=((1,10,100,1000),(1,10,100,1000)))
-#         if i==1 and j==3:
-#             addColorbar(ax,cmap,limits[0],limits[1],r"$\sigma_{\rm 1D}$ $(\rm km\,s^{-1})$",logflag=1,span_full_figure=False,nticks=3)
-#         if i==2 and j==3:
-#             addColorbar(ax,cmap,limits[0],limits[1],r"$T$ $(\rm K)$",logflag=1,span_full_figure=False,nticks=5)
-#         if i==3 and j==3:
-#             addColorbar(ax,cmap,limits[0],limits[1],r"$v_{\rm A}$ $(\rm km\,s^{-1})$",logflag=1,span_full_figure=False,nticks=3)
-#         #[i.set_linewidth(0.1) for i in ax.spines.values()]
-# #         if i==2:
-# #             print("doing relief")
-# #             z = np.clip(np.log10(sigma_gas/1)/3,0,1)
-# #             ls = LightSource(azdeg=315, altdeg=45)
-# #             lightness = ls.hillshade(z, vert_exag=5)
-# #             color = plt.get_cmap(cmap)(np.log10(sigma_v/0.1)/2)
-# #             img = ls.blend_hsv(color[:,:,:3], lightness[:,:,None])
-# #             ax.imshow(img[::-1],extent=(-rmax,rmax,-rmax,rmax))
-
-
-# #[a.set_aspect('equal') for a in axes]
-
-# fig.subplots_adjust(hspace=-0.0,wspace=0)
-# plt.savefig("16panel_render.png",bbox_inches='tight',dpi=1000)#,dpi=300)

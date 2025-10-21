@@ -2,7 +2,7 @@
 
 from meshoid import Meshoid
 
-plotlabel = r"$X\,\left(\rm  pc\right)$"  # label that will appear on the colorbar
+plotlabel = r"$x\,\left(\rm  pc\right)$"  # label that will appear on the colorbar
 required_datafields = {
     "PartType0/Coordinates",
     "PartType0/Masses",
@@ -15,7 +15,7 @@ colormap = "RdBu"
 # a meshoid constructed from the data, and arguments to meshoid rendering functions
 def render(pdata: dict, meshoid: Meshoid, mapargs: dict):
     """Slice of the coordinate function"""
-    return meshoid.Slice(pdata["PartType0/Coordinates"][:, 0], **mapargs, order=0)
+    return meshoid.Slice(pdata["PartType0/Coordinates"][:, 0], **mapargs, order=1)
     return meshoid.SurfaceDensity(
         pdata["PartType0/Masses"] * pdata["PartType0/Coordinates"][:, 0], **mapargs
     ) / meshoid.SurfaceDensity(pdata["PartType0/Masses"], **mapargs)

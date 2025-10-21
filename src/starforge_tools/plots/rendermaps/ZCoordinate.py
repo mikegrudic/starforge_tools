@@ -2,7 +2,7 @@
 
 from meshoid import Meshoid
 
-plotlabel = r"$Y\,\left(\rm pc\right)$"  # label that will appear on the colorbar
+plotlabel = r"$z\,\left(\rm pc\right)$"  # label that will appear on the colorbar
 required_datafields = {
     "PartType0/Coordinates",
     "PartType0/Masses",

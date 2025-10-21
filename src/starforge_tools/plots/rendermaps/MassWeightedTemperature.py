@@ -4,7 +4,7 @@ from meshoid import Meshoid
 import matplotlib.colors as colors
 import numpy as np
 
-plotlabel = r"$\rm \langle T \rangle_{\rm M} \,\left(K\right)$"  # label that will appear on the colorbar
+plotlabel = r"$T \,\left(\rm K\right)$"  # label that will appear on the colorbar
 required_datafields = {
     "PartType0/Coordinates",
     "PartType0/Masses",

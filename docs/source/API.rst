@@ -1,5 +1,5 @@
 API Documentation
 =================
 
-.. automodule:: starforge_tools.plots
+.. automodule:: starforge_tools
     :members:

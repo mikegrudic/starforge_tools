@@ -5,7 +5,7 @@ API Documentation
     :members:
     :ignore-module-all:       
 
-.. automodule:: starforge_tools.plots.rendermaps
+.. automodule:: starforge_tools.plots.rendermaps.SurfaceDensity
     :members:
     :ignore-module-all:       
 

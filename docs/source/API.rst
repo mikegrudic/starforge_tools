@@ -1,9 +1,9 @@
 API Documentation
 =================
 
-.. automodule:: starforge_tools.plots.multipanel
+.. automodule:: starforge_tools.plots
     :members:
 
-.. automodule:: starforge_tools.
+.. automodule:: starforge_tools.microphysics
     :members:
        

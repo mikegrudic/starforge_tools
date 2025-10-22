@@ -47,8 +47,6 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS, centering=None) ->
                         snapdata[s2] = np.c_[data[:, 0], data[:, 2], data[:, 1]]
                     if "Coordinates" in s2:
                         snapdata[s2] -= snapdata["Header"]["BoxSize"] * 0.5
-                        if centering is not None:
-                            
 
     return snapdata
 

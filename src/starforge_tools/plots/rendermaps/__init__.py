@@ -9,3 +9,13 @@ from . import (
     ZCoordinate,
     #    RenderMap,
 )
+
+
+DEFAULT_MAPS = (
+    "SurfaceDensity",
+    "VelocityDispersion",
+    "MassWeightedTemperature",
+    "AlfvenSpeed",
+    #    "XCoordinate",
+    #  "ZCoordinate",
+)

@@ -26,7 +26,7 @@ DEFAULT_MAPS = (
 )
 
 
-def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
+def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS, centering=None) -> dict:
     """Does the I/O to get the data required for the specified maps"""
     required_data = set.union(*[getattr(rendermaps, s).required_datafields for s in maps])
     snapdata = {}
@@ -47,6 +47,8 @@ def get_pdata_for_maps(snapshot_path: str, maps=DEFAULT_MAPS) -> dict:
                         snapdata[s2] = np.c_[data[:, 0], data[:, 2], data[:, 1]]
                     if "Coordinates" in s2:
                         snapdata[s2] -= snapdata["Header"]["BoxSize"] * 0.5
+                        if centering is not None:
+                            
 
     return snapdata
 
@@ -194,6 +196,8 @@ def multipanel_timelapse_map(
 
     if num_times == 1:
         ax = np.atleast_2d(ax).T
+    elif num_maps == 1:
+        ax = np.atleast_2d(ax)
 
     for i, t in enumerate(times):
         pdata = get_pdata_for_maps(snaps[i], maps)

@@ -3,7 +3,8 @@
 from os.path import isfile
 from glob import glob
 import numpy as np
-import h5pickle as h5py
+#import h5pickle as h5py
+import h5py
 from astropy import units as u, constants as c
 from joblib import Parallel, delayed, wrap_non_picklable_objects
 from multiprocessing import Pool
@@ -47,11 +48,27 @@ class GlobalStatistics:
         unitdict["UnitTime_In_CGS"] = unitdict["UnitLength_In_CGS"] / unitdict["UnitVelocity_In_CGS"]
         return unitdict
 
+    def get_gas_kinetic_energy(self):
+        """Returns the total gas kinetic energy"""
+        KE = 0.5*np.sum(self.snapfile["PartType0/Masses"][:] * np.sum(self.snapfile["PartType0/Velocities"][:]**2,axis=1))
+        KE *= (self.get_units()["UnitVelocity_In_CGS"] * u.cm/u.s)**2 * self.get_units()["UnitMass_In_CGS"] * u.g
+        return KE.to(u.erg)
+
     def get_stellar_mass_sum(self):
         """Returns the total stellar mass in code units."""
         if "PartType5" in self.snapfile.keys():
             return np.sum(self.snapfile["PartType5/BH_Mass"][:]) * u.M_sun
         return 0 * u.M_sun
+
+    def get_gas_velocity_dispersion(self):
+        """Returns 3D gas velocity dispersion in km/s"""
+        m = self.snapfile["PartType0/Masses"][:]
+        v = self.snapfile["PartType0/Velocities"][:]
+        KE = 0.5*np.sum(m * np.sum(v**2,axis=1))        
+        M = np.sum(m)
+        KE_bulk = 0.5 * M * np.sum(np.average(v,axis=0,weights=m)**2)
+        KE = max(0,KE-KE_bulk)        
+        return np.sqrt(2*KE/M) * (self.get_units()["UnitVelocity_In_CGS"] * u.cm/u.s).to(u.km/u.s)
 
     def get_stellar_mass_max(self):
         """Returns the maximum stellar mass in code units."""
@@ -106,9 +123,10 @@ class GlobalStatistics:
 # @delayed
 # @wrap_non_picklable_objects
 def get_stats_from_snapshot(snappath, stats_to_compute=None):
-    print(snappath)
     """Returns a global statistics instance containing computed global statistics"""
     with h5py.File(snappath, "r") as f:
+        if not f:
+            raise(Exception("file not opened successfully"))
         stats = GlobalStatistics(f, stats_to_compute)
     return stats
 
@@ -131,7 +149,8 @@ def get_globalstats_of_simulation(rundir, stats_to_compute=None, n_jobs=-1, over
     datafile_path = rundir + "/global_statistics.fits"
     format = "fits"
     if isfile(datafile_path) and not overwrite:
-        tab = Table.read(datafile_path, format=format)  # , format="ascii.basic")
+        tab = QTable.read(datafile_path, format=format)  # , format="ascii.basic")
+        print(stats_to_compute, list(tab.keys()))
         if stats_to_compute is not None:
             if set(stats_to_compute).intersection(tab.keys()) == stats_to_compute:
                 return tab
@@ -143,7 +162,7 @@ def get_globalstats_of_simulation(rundir, stats_to_compute=None, n_jobs=-1, over
         snaps += glob(rundir + "/stars_only/snapshot*.hdf5")
     snaps = natsorted(snaps)
     if n_jobs == 1:
-        stats = list(map(get_stats_from_snapshot, snaps))
+        stats = [get_stats_from_snapshot(s,stats_to_compute) for s in snaps]
     else:
         #        stats = Pool().starmap(get_stats_from_snapshot, zip(snaps, len(snaps) * [stats_to_compute]))
         stats = Parallel(n_jobs=n_jobs)(delayed(get_stats_from_snapshot)(s, stats_to_compute) for s in snaps)

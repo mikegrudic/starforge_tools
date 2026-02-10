@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 
 """                                                                            
-Generates far-IR images of simulation snapshots that have dust temperature
-information.
+Generates far-IR images of simulation snapshots that have dust temperature information.
 
 Usage: dustemission.py <files> ... [options]
 
@@ -12,8 +11,7 @@ Options:
    --center=<X,Y>              Center of the image (defaults to box center)
    --res=<N>                   Resolution of the image [default: 1024]   
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
-   --output_path               Output path for images (defaults to /dustemission 
-                               directory next to the snapshot)   
+   --output_path               Output path for images (defaults to /dustemission directory next to the snapshot)   
    --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]          
 """
 
@@ -99,7 +97,7 @@ def make_dustemission_map_from_snapshot(path):
     # noise = np.random.poisson(N_eff)/N_eff * intensity - intensity
     h = h.clip(dx, 1e100)
     # print("making surface density map...")
-    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES,parallel=True)
+    sigmagas = GridSurfaceDensity(m, x, h, center, size, RES, parallel=True)
     # print("done!")
     X = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[0]
     Y = np.linspace(0.5 * (dx - size), 0.5 * (size - dx), RES) + center[1]

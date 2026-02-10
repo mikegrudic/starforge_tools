@@ -42,6 +42,13 @@ STARFORGE Documentation
    wiki_pages/setting_up_ffmpeg
 
 .. toctree::
+   :maxdepth: 2
+   :caption: Python package
+   
+   API
+
+
+.. toctree::
    :maxdepth: 1
    :caption: Community
 

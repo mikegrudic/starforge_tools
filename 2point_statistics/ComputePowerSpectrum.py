@@ -1,18 +1,18 @@
 #!/usr/bin/env python
 
-"""                                                                            
+"""
 Compute power spectra from STARFORGE snapshots. Runs in parallel
 
 Usage: ComputePowerSpectrum.py <files> ... [options]
 
-Options:                                                                       
+Options:
    -h --help                Show this screen.
-   --boxsize=<L>            Size of the box on which to compute the power 
-                            spectrum (defaults to 0.2 * simulation box size, 
+   --boxsize=<L>            Size of the box on which to compute the power
+                            spectrum (defaults to 0.2 * simulation box size,
                             -1 uses the full box size)
-   --res=<N>                Size of the grid on which to compute the power 
-                            spectrum [default: 256]   
-   --verbose                Print what the code is doing to stdout as it runs  
+   --res=<N>                Size of the grid on which to compute the power
+                            spectrum [default: 256]
+   --verbose                Print what the code is doing to stdout as it runs
 """
 
 from sys import argv
@@ -66,17 +66,18 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
 
         rho = np.array(F["PartType0"]["Density"])
         n = rho * 29.9
+        cut = n > 0
+        rho = rho[cut]
+
         if boxsize is not None:
             if float(boxsize) < 0:
-                boxsize = F["Header"].attrs["BoxSize"]
+                boxsize = gridsize = F["Header"].attrs["BoxSize"]
         else:
-            boxsize = 0.2 * F["Header"].attrs["BoxSize"]
-
+            gridsize = 0.2 * F["Header"].attrs["BoxSize"]
         center = np.repeat(0.5 * F["Header"].attrs["BoxSize"], 3)
         if verbose:
             print("Reading snapshot...")
-        cut = n > 0
-        rho = rho[cut]
+
         x = np.array(F["PartType0"]["Coordinates"])[cut]
         m = np.array(F["PartType0"]["Masses"])[cut]
         v = np.array(F["PartType0"]["Velocities"])[cut] / 1e3
@@ -85,29 +86,27 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
 
         if verbose:
             print("Initializing meshoid instance...")
+
         M = Meshoid(x, m, h, boxsize=boxsize, verbose=verbose)
+        # M.BuildTree()
+        # M.TreeUpdate()
         if verbose:
             print("Depositing mass to grid...")
-        rhogrid = 10 ** M.InterpToGrid(
-            np.log10(rho), size=boxsize, res=powerspec_gridres, center=center
-        )  # M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
+
+        interpargs = {"size": gridsize, "res": powerspec_gridres, "center": center}
+        rhogrid = 10 ** M.InterpToGrid(np.log10(rho), **interpargs)
+        # M.DepositToGrid(m, size=boxsize, res=powerspec_gridres, center=center)
+        #        rhogrid_norm = np.sum(rhogrid**2 * (boxsize / powerspec_gridres)**3)
         if verbose:
             print("Interpolating v to grid...")
-        vgrid = M.InterpToGrid(v, size=boxsize, res=powerspec_gridres, center=center)
+        vgrid = M.InterpToGrid(v, **interpargs)
+        #        vgrid_norm = np.sum(rhogrid**2 * (boxsize / powerspec_gridres)**3)
         vgrid = np.rollaxis(vgrid, -1, 0)
 
         if verbose:
             print("Interpolating B to grid...")
-        Bgrid = M.InterpToGrid(B, size=boxsize, res=powerspec_gridres, center=center)
+        Bgrid = M.InterpToGrid(B, **interpargs)
         Bgrid = np.rollaxis(Bgrid, -1, 0)
-        # np.array(
-        #     [
-        #         M.InterpToGrid(
-        #             B[:, i], size=boxsize, res=powerspec_gridres, center=center
-        #         )
-        #         for i in range(3)
-        #     ]
-        # )
 
         if verbose:
             print("Computing power spectra...")
@@ -120,7 +119,7 @@ def ComputePowerSpectra(f, options):  # for f in argv[1:]:
             powerspecpath + "/powerspec_" + snapnum + ".dat",
             np.c_[
                 k,
-                k * 2 * np.pi / boxsize,
+                k * 2 * np.pi / gridsize,
                 powerspectra[0],
                 powerspectra[1],
                 powerspectra[2],

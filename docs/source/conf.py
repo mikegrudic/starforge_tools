@@ -18,8 +18,8 @@ autoclass_content = "both"
 
 # -- Project information -----------------------------------------------------
 
-project = "STARFORGE"
-copyright = "2023, Mike Grudic"
+project = "starforge_tools"
+copyright = "2025, Mike Grudic"
 author = "Mike Grudic"
 
 # The full version, including alpha/beta/rc tags

@@ -4,3 +4,7 @@ numba
 numpy
 scipy
 astropy
+meshoid
+natsort
+h5py
+matplotlib

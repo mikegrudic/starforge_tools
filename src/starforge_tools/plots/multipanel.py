@@ -101,7 +101,7 @@ def multipanel_timelapse_map(
 
         title = t.to_string(formatter="%4.3g", format="latex")
         if SFE_in_title:
-            title += rf", SFE=${round(SFE*100,0)}\%$"
+            title += rf", SFE=${round(SFE * 100, 0)}\%$"
         ax[0, i].set_title(title)
 
         renderer = MapRenderer(pdata, mapargs)
@@ -144,4 +144,4 @@ def multipanel_timelapse_map(
 
     # fig.tight_layout(h_pad=0, w_pad=0)
     fig.subplots_adjust(hspace=-0.0, wspace=0.0)
-    plt.savefig("multipanel.png")  # , bbox_inches="tight")
+    plt.savefig("multipanel.png", bbox_inches="tight", pad_inches=0)

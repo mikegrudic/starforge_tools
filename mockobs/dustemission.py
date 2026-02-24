@@ -50,7 +50,7 @@ if options["--output_path"]:
 else:
     OUTPATH = None
 NUM_JOBS = int(options["--num_jobs"])
-DUST_MODEL = options("--dust_model")
+DUST_MODEL = options["--dust_model"]
 SOLAR_Z = 0.0142
 
 

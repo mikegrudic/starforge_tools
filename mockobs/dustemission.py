@@ -13,6 +13,7 @@ Options:
    --wavelengths=<l1,l2,etc>   Wavelengths in micron to image [default: 150, 250, 350, 500]
    --output_path               Output path for images (defaults to /dustemission directory next to the snapshot)
    --num_jobs=<N>              Number of snapshots to process in parallel [default: 1]
+   --dust_model=<model>        Dust model to use; default to astrodust
 """
 
 from os import mkdir
@@ -49,7 +50,7 @@ if options["--output_path"]:
 else:
     OUTPATH = None
 NUM_JOBS = int(options["--num_jobs"])
-
+DUST_MODEL = options("--dust_model")
 SOLAR_Z = 0.0142
 
 
@@ -87,7 +88,7 @@ def make_dustemission_map_from_snapshot(path):
 
     dx = size / (RES - 1)
     # print("making dust emission map...")
-    intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center, model="astrodust")
+    intensity = dust_emission_map(x, m * Z, h, Tdust, size, RES, WAVELENGTHS, center, model=dust_model)
     # print("done!")
     # add noise
     # SNR = 60

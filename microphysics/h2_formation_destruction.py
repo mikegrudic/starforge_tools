@@ -151,7 +151,7 @@ def compute_h2_rates(snapshot_path: str):
 
 def main():
     snappaths = argv[1:]
-    Parallel(n_jobs=1)(delayed(compute_h2_rates)(s) for s in snappaths)
+    Parallel(n_jobs=2)(delayed(compute_h2_rates)(s) for s in snappaths)
     # [compute_h2_rates(s) for s in snappaths]
 
 

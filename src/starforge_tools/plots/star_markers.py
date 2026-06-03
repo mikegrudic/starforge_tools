@@ -1,4 +1,6 @@
 import numpy as np
+from matplotlib.markers import MarkerStyle
+from matplotlib.transforms import Affine2D
 
 star_colors = (
     np.array([[255, 203, 132], [255, 243, 233], [155, 176, 255]]) / 255
@@ -6,26 +8,32 @@ star_colors = (
 
 
 def plot_star_markers(ax, pdata):
-    """Plots star markers with sizes and colors varying according to stellar mass."""
+    """Plots star markers with sizes and colors varying according to stellar mass.
+    Each marker is randomly rotated (deterministic seed for reproducibility)."""
     xs = pdata["PartType5/Coordinates"]
     ms = pdata["PartType5/BH_Mass"]
-    xs, ms = xs[ms.argsort()][::-1], np.sort(ms)[::-1]
+    order = ms.argsort()
+    xs, ms = xs[order], ms[order]
     starcolors = np.array([np.interp(np.log10(ms), [-1, 0, 1], star_colors[:, i]) for i in range(3)]).T
-    ax.scatter(
-        xs[:, 0],
-        xs[:, 1],
-        s=4 * (ms / 1) ** (0.5),
-        edgecolor="black",
-        facecolor=starcolors,
-        marker="*",
-        lw=0.02,
-        alpha=1,
-    )
+    sizes = 4 * (ms / 1) ** 0.5
+    angles = np.random.default_rng(0).uniform(0, 360, size=len(ms))
+    for i in range(len(ms)):
+        marker = MarkerStyle("*", transform=Affine2D().rotate_deg(angles[i]))
+        ax.scatter(
+            xs[i, 0],
+            xs[i, 1],
+            s=sizes[i],
+            edgecolor="black",
+            facecolor=starcolors[i],
+            marker=marker,
+            lw=0.02,
+            alpha=0.5,
+        )
 
 
 def plot_star_legend(ax):
     """Plots the legend for stellar masses for star markers"""
-    for m_dummy in 0.1, 1, 10, 100:
+    for m_dummy in 0.1, 1, 10, 100, 1000:
         ax.scatter(
             [np.inf],
             [np.inf],

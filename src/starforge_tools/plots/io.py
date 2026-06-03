@@ -11,7 +11,7 @@ from astropy import units as u
 
 def get_pdata_for_maps(snapshot_path: str, maps=rendermaps.DEFAULT_MAPS, centering=None) -> dict:
     """Does the I/O to get the data required for the specified maps"""
-    required_data = set.union(*[getattr(rendermaps, s).required_datafields for s in maps])
+    required_data = set().union(*[getattr(rendermaps, s).required_datafields for s in maps])
     snapdata = {}
     with h5py.File(snapshot_path, "r") as F:
         snapdata["Header"] = dict(F["Header"].attrs)

@@ -202,24 +202,3 @@ Other
    ``RT_ISRF_BACKGROUND``.
 
 ----
-
-Summary: what changed between each version pair
-------------------------------------------------
-
-.. list-table::
-   :header-rows: 1
-   :widths: 30 70
-
-   * - Transition
-     - Biggest physics changes for a typical STARFORGE run
-   * - pre-v1.1 → v1.1
-     - Ionizing-photon I-front transport fixed; 1-loop wind coupling forced on;
-       RT boundary condition in place.
-   * - v1.1 → v1.2
-       rewrite (new L*/R* tracks); sink-formation criteria unlocked for IR-RT runs;
-       RSOL raised 3×; photon re-injection after accretion added; EOS_SUBSTELLAR_ISM
-       disabled; CR column attenuation introduced.
-   * - v1.2 → v1.3
-     - EOS_SUBSTELLAR_ISM correctly implemented (molecular-regime thermodynamics);
-       root-finder rewrite (dust, fH₂, cooling solvers); wind input luminosity changed
-       to MS-only; CR floor added; per-rank CR=0 bug fixed.

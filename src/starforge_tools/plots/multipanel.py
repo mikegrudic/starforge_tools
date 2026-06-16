@@ -140,7 +140,9 @@ def multipanel_timelapse_map(
         X, Y = 2 * [np.linspace(-0.5 * length, 0.5 * length, res)]
         X, Y = np.meshgrid(X, Y, indexing="ij")
         if "PartType5/Masses" in pdata:
-            SFE = pdata["PartType5/Masses"].sum() / (0.8 * pdata["PartType0/Masses"].sum() + pdata["PartType5/Masses"].sum())
+            SFE = pdata["PartType5/Masses"].sum() / (
+                0.8 * pdata["PartType0/Masses"].sum() + pdata["PartType5/Masses"].sum()
+            )
         else:
             SFE = 0
 
@@ -158,7 +160,7 @@ def multipanel_timelapse_map(
                 cache_paths[mapname] = cp
                 if os.path.isfile(cp) and os.path.getmtime(cp) > snap_mtime:
                     raw = np.load(cp).astype(np.float64)
-                    cached_renders[mapname] = 10.0**raw if getattr(rendermaps, mapname).log_cache else raw
+                    cached_renders[mapname] = 10.0 ** raw if getattr(rendermaps, mapname).log_cache else raw
         missing = [m for m in maps if m not in cached_renders]
         renderer = MapRenderer(pdata, mapargs) if missing else None
 
@@ -195,7 +197,9 @@ def multipanel_timelapse_map(
             else:
                 norm = None
                 vmin, vmax = limits
-            pcm = axes.pcolormesh(X, Y, render, norm=norm, cmap=cmap, label=label, vmin=vmin, vmax=vmax, rasterized=True)
+            pcm = axes.pcolormesh(
+                X, Y, render, norm=norm, cmap=cmap, label=label, vmin=vmin, vmax=vmax, rasterized=True
+            )
             if i == num_times - 1:
                 add_colorbar(pcm, label=label, size=str(100 * colorbar_frac) + "%")
             if i == 0:

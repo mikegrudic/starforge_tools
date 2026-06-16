@@ -23,5 +23,7 @@ class VelocityDispersion(RenderMap):
             meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2] ** 2, **mapargs)
             / sigma
         )
-        vmap = meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2], **mapargs) / sigma
+        vmap = (
+            meshoid.SurfaceDensity(pdata["PartType0/Masses"] * pdata["PartType0/Velocities"][:, 2], **mapargs) / sigma
+        )
         return np.sqrt(np.clip(vSqr_map - vmap**2, 0, 1e100)) / 1e3

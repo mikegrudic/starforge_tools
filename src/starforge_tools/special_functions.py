@@ -74,7 +74,7 @@ def planck_norm(p):
     return PLANCK_NORM[p - 1]
 
 
-@njit(fastmath=True, error_model="numpy")
+@njit(fastmath=False, error_model="numpy")
 def planck_upper_series(x1: float, x2: float = np.inf, p: int = 3):
     """Series solution for Planck integral x^p/(exp(x)-1) from x1 to
     x2 evaluated to machine precision. Most efficient for large x.
@@ -106,7 +106,7 @@ def planck_upper_series(x1: float, x2: float = np.inf, p: int = 3):
     # will cumulatively multiply exp(-x) at each iteration
     expx1_inv = expx1_inv_power = np.exp(-x1)
 
-    if x2 == np.inf:
+    if np.isinf(x2):
         expx2_inv = expx2_inv_power = 0.0
     else:
         expx2_inv = expx2_inv_power = np.exp(-x2)
@@ -116,7 +116,7 @@ def planck_upper_series(x1: float, x2: float = np.inf, p: int = 3):
     # now sum the terms. Note this is the general case; we could simplify
     # if we know p a priori and make this a little faster
     while np.abs(term) > tol * np.abs(series_sum):
-        if x2 == np.inf:
+        if np.isinf(x2):
             nx1 = n * x1
             term1 = 1.0
             m = 1

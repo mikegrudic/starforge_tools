@@ -75,7 +75,7 @@ RT photon re-injection after accretion (``2b9dbc9e``, then made default in ``569
    ``SINGLE_STAR_STARFORGE_DEFAULTS`` with ``RT_INFRARED`` in ``56944088``.  Not
    present at all in v1.1.
 
-Ströomgren-radius criterion bugfix (``24109dbc``)
+Strömgren-radius criterion bugfix (``24109dbc``)
    ``rt_sourceinjection_evaluate`` was comparing neighbor density instead of the star's
    local density to decide whether to downgrade photons to IR.  Shells surrounding HII
    regions were never ionized under the old code.
@@ -96,15 +96,9 @@ Cosmic-ray background and attenuation
 Sink particles and feedback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Protostellar evolution rewritten (``9cd3738f`` et al.)
-   Now uses the Nakano-2000 evolution equation with accretion-rate-dependent
-   interpolation and Hermite-style subcycling.  Sets R\ :sub:`*`, T\ :sub:`*`,
-   L\ :sub:`acc`, L\ :sub:`MS` — feeds directly into RT luminosity, wind Ṁ, and
-   photoionization rates.  Quantitatively different T/L tracks vs. v1.1.
-
 ``SINGLE_STAR_DIRECT_GRAVITY_RADIUS = 1000 AU`` as default (``56944088``)
    All star–star gravity within 1000 AU is computed exactly.  Changes binary/multiple
-   dynamics; expect tighter binaries and different multiplicity statistics.
+   dynamics.
 
 Sink-formation criteria at high density (``d1ce905e`` + ``93ed5116``)
    * Prevents spurious twin-sink formation within 0.1 AU of an existing sink.
@@ -113,12 +107,7 @@ Sink-formation criteria at high density (``d1ce905e`` + ``93ed5116``)
    * Fixed flag logic so the optically-thick virial limiter (``v_fast → 0.2 km/s``
      above n > 10¹³ cm⁻³) activates when ``RT_INFRARED`` is on.  In v1.1 this branch
      was silently disabled for RT runs, making sink formation very slow in dense cores.
-
-Sink-accretion timestep indexing fix (``8bebf956``)
-   In ``BH_INTERACT_ON_GAS_TIMESTEP`` mode, four routines used the BlackholeTempInfo
-   index instead of the particle index to fetch ``dt_since_last_gas_search``.
-   Mdot histories before this fix can be off by a factor of a few.
-
+     
 Spawning logic bug (``4892f8ad``)
    ``Max_Unspawned_MassUnits_fromSink`` was compared in cell-count units against a
    mass in mass units, giving a wrong trigger threshold for jet/wind spawning.
@@ -154,8 +143,7 @@ Thermodynamics
 
 ``EOS_SUBSTELLAR_ISM`` correctly reinstated
    Now uses the self-consistent molecular+atomic EOS with full T-dependent γ(T,ρ).
-   H₂ physics moved to ``hydrogen_molecule.c``.  Expect lower gas temperatures at
-   densities where H₂ matters compared with v1.2's ideal-gas fallback.
+   H₂ physics moved to ``hydrogen_molecule.c``. 
 
 ``EOS_PRECOMPUTE`` infrastructure
    New ``set_eos`` routine caches T, γ, P; ``get_pressure`` is now a getter.

@@ -9,7 +9,18 @@ from .special_functions import planck_integral, PLANCK_NORM
 
 
 def luminosity_MS(mass):
-    """Fit of main-sequence luminosity as a function of main-sequence mass from Tout 1996MNRAS.281..257T, in solar units"""
+    """Main-sequence luminosity from Tout 1996MNRAS.281..257T.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+
+    Returns
+    -------
+    ndarray
+        Luminosity in solar luminosities.
+    """
     lum_ms = (0.39704170 * np.power(mass, 5.5) + 8.52762600 * np.power(mass, 11.0)) / (
         0.00025546
         + np.power(mass, 3.0)
@@ -24,8 +35,18 @@ def luminosity_MS(mass):
 
 
 def radius_MS(mass):
-    """Fit of main-sequence radius as a function of main-sequence mass from
-    Tout 1996MNRAS.281..257T, in solar units"""
+    """Main-sequence radius from Tout 1996MNRAS.281..257T.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+
+    Returns
+    -------
+    ndarray
+        Radius in solar radii.
+    """
     radius_ms = (
         1.71535900 * np.power(mass, 2.5)
         + 6.59778800 * np.power(mass, 6.5)
@@ -48,22 +69,65 @@ VESC_FAC = np.sqrt(2 * c.G * c.M_sun / c.R_sun).to(u.km / u.s).value
 
 
 def v_escape(m_solar, r_solar=None):
-    """Escape speed = sqrt(2GM/R) in km/s"""
+    """Surface escape speed sqrt(2GM/R).
+
+    Parameters
+    ----------
+    m_solar : array_like
+        Stellar mass in solar masses.
+    r_solar : array_like, optional
+        Stellar radius in solar radii. Defaults to the main-sequence radius
+        from `radius_MS`.
+
+    Returns
+    -------
+    ndarray
+        Escape speed in km/s.
+    """
     if r_solar is None:
         r_solar = radius_MS(m_solar)
     return VESC_FAC * np.sqrt(m_solar / r_solar)
 
 
 def effective_temperature(mass=None, lum=None, radius=None):
-    """Effective temperature as a function of mass (assuming main sequence)
-    or optionally luminosity and radius"""
+    """Stellar effective temperature from the Stefan-Boltzmann law.
+
+    Parameters
+    ----------
+    mass : array_like, optional
+        Stellar mass in solar masses. If provided without `lum` and `radius`,
+        main-sequence values are used.
+    lum : array_like, optional
+        Luminosity in solar luminosities.
+    radius : array_like, optional
+        Radius in solar radii.
+
+    Returns
+    -------
+    ndarray
+        Effective temperature in Kelvin.
+    """
     if mass is not None and ((lum is None) or (radius is None)):
         lum, radius = luminosity_MS(mass), radius_MS(mass)
     return 5814.33 * (lum / radius**2) ** 0.25
 
 
 def vwind_over_vesc(T_eff):
-    """Stellar wind velocity in units of the escape speed (Lamers 1995)"""
+    """Stellar wind velocity in units of the escape speed (Lamers 1995).
+
+    Returns 0.7 for T_eff < 12500 K, 1.3 for T_eff < 21000 K, and 2.6
+    otherwise, reflecting the bistability jumps in line-driven winds.
+
+    Parameters
+    ----------
+    T_eff : array_like
+        Effective temperature in Kelvin.
+
+    Returns
+    -------
+    ndarray
+        Wind speed as a multiple of the surface escape speed.
+    """
     v = np.repeat(2.6, len(T_eff))
     if np.any(T_eff < 1.25e4):
         v[T_eff < 1.25e4] = 0.7
@@ -73,13 +137,45 @@ def vwind_over_vesc(T_eff):
 
 
 def vwind(mass, lum=None, radius=None):
-    """Wind speed in km/s"""
+    """Stellar wind speed.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+    lum : array_like, optional
+        Luminosity in solar luminosities. Defaults to main-sequence value.
+    radius : array_like, optional
+        Radius in solar radii. Defaults to main-sequence value.
+
+    Returns
+    -------
+    ndarray
+        Wind speed in km/s.
+    """
     T_eff = effective_temperature(mass, lum, radius)
     return vwind_over_vesc(T_eff) * v_escape(mass, radius)
 
 
 def mdot_vms(mass, lum=None, radius=None, Z=1.0):
-    """Wind mass-loss rate in the VMS regime according to Sahahit arXiv:2205.09125 Eq. 13"""
+    """Wind mass-loss rate for very massive stars (VMS) per Sabhahit arXiv:2205.09125 Eq. 13.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+    lum : array_like, optional
+        Luminosity in solar luminosities. Defaults to main-sequence value.
+    radius : array_like, optional
+        Radius in solar radii. Defaults to main-sequence value.
+    Z : float, optional
+        Metallicity in solar units. Default is 1.0.
+
+    Returns
+    -------
+    ndarray
+        Mass-loss rate in solar masses per year.
+    """
     if mass is not None and ((lum is None) or (radius is None)):
         lum, radius = luminosity_MS(mass), radius_MS(mass)
 
@@ -95,7 +191,28 @@ def mdot_vms(mass, lum=None, radius=None, Z=1.0):
 
 
 def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
-    """Returns the main-sequence wind mass loss rate in Msun/yr in the STARFORGE model"""
+    """Main-sequence wind mass-loss rate used in the STARFORGE model.
+
+    Combines a weak-wind prescription (scales as L^2.9) with an O-star
+    prescription (scales as L^1.5), taking the minimum, then applies the VMS
+    rate from `mdot_vms` as a floor when `vms=True`.
+
+    Parameters
+    ----------
+    mass : array_like, optional
+        Stellar mass in solar masses.
+    lum : array_like, optional
+        Luminosity in solar luminosities. Computed from `mass` if not given.
+    Z_solar : float, optional
+        Metallicity in solar units. Default is 1.0.
+    vms : bool, optional
+        If True, apply the VMS mass-loss floor. Default is True.
+
+    Returns
+    -------
+    ndarray
+        Mass-loss rate in solar masses per year.
+    """
     if lum is None:
         lum = luminosity_MS(mass)
     mdot_hi = 10**-22.2 * lum**2.9  # weak wind
@@ -111,7 +228,25 @@ def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
 
 
 def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
-    """Number of photons with energy > energy_eV emitted per second, assuming blackbody spectrum, to machine precision"""
+    """Ionizing photon emission rate for a blackbody spectrum, computed to machine precision.
+
+    Parameters
+    ----------
+    mass : array_like, optional
+        Stellar mass in solar masses. Used to infer `lum` and `radius` if not
+        provided.
+    lum : array_like, optional
+        Luminosity in solar luminosities.
+    radius : array_like, optional
+        Radius in solar radii.
+    energy_eV : float, optional
+        Ionization threshold in eV. Default is 13.6 eV (hydrogen).
+
+    Returns
+    -------
+    ndarray
+        Ionizing photon emission rate in photons per second.
+    """
     if mass is not None and ((lum is None) or (radius is None)):
         lum, radius = luminosity_MS(mass).clip(1e-10), radius_MS(mass)
 
@@ -124,7 +259,23 @@ def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
 
 
 def Q_ionizing_approx(mass, energy_eV=13.6):
-    """Number of photons with energy > energy_eV emitted per second, assuming blackbody spectrum, accurate to within 5%"""
+    """Ionizing photon emission rate for a blackbody spectrum, accurate to within ~5%.
+
+    Faster than `Q_ionizing` due to the polynomial approximation used for the
+    Planck integral. Prefer `Q_ionizing` when accuracy matters.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+    energy_eV : float, optional
+        Ionization threshold in eV. Default is 13.6 eV (hydrogen).
+
+    Returns
+    -------
+    ndarray
+        Ionizing photon emission rate in photons per second.
+    """
     L, R = luminosity_MS(mass), radius_MS(mass)
     T_eff = effective_temperature(mass, L, R)
     k_B = 8.617e-5
@@ -134,7 +285,21 @@ def Q_ionizing_approx(mass, energy_eV=13.6):
 
 
 def ionizing_frac_approx(x1):
-    """Approximates fraction of luminosity above E = x * k_B * T_eff"""
+    """Fraction of blackbody luminosity emitted above E = x1 * k_B * T_eff.
+
+    Uses a low-x polynomial and a high-x exponential approximation, matched
+    at x1 = 2.71.
+
+    Parameters
+    ----------
+    x1 : array_like
+        Dimensionless energy threshold E / (k_B * T_eff).
+
+    Returns
+    -------
+    ndarray
+        Fraction of total luminosity above the threshold.
+    """
     result = np.empty_like(x1)
     result[x1 < 2.710528524106676] = (
         1
@@ -151,7 +316,18 @@ def ionizing_frac_approx(x1):
 
 
 def lum_ionizing(mass):
-    """Luminosity of photons with energy > energy_eV emitted per second, assuming blackbody spectrum"""
+    """Luminosity in hydrogen-ionizing photons (E > 13.6 eV) assuming a blackbody spectrum.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+
+    Returns
+    -------
+    ndarray
+        Ionizing luminosity in solar luminosities.
+    """
     L, R = luminosity_MS(mass), radius_MS(mass)
     T_eff = effective_temperature(mass, L, R)
     k_B = 8.617e-5
@@ -161,7 +337,22 @@ def lum_ionizing(mass):
 
 
 def lum_band(mass, E1, E2=np.inf):
-    """Luminosity in specified energy band in eV, assuming blackbody spectrum"""
+    """Luminosity in a specified photon energy band, assuming a blackbody spectrum.
+
+    Parameters
+    ----------
+    mass : array_like
+        Stellar mass in solar masses.
+    E1 : float
+        Lower energy bound in eV.
+    E2 : float, optional
+        Upper energy bound in eV. Default is infinity.
+
+    Returns
+    -------
+    ndarray
+        Band luminosity in solar luminosities.
+    """
     L, R = luminosity_MS(mass), radius_MS(mass)
     T_eff = effective_temperature(mass, L, R)
     k_B = 8.617e-5

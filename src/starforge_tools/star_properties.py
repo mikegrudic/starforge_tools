@@ -1,11 +1,8 @@
 """Routines for feedback rates from individual stars in the STARFORGE model"""
 
-from dataclasses import dataclass
-import astropy
 from astropy import units as u, constants as c
 import numpy as np
-from numba import vectorize
-from .special_functions import planck_integral, PLANCK_NORM
+from .special_functions import planck_integral
 
 
 def luminosity_MS(mass):
@@ -128,12 +125,8 @@ def vwind_over_vesc(T_eff):
     ndarray
         Wind speed as a multiple of the surface escape speed.
     """
-    v = np.repeat(2.6, len(T_eff))
-    if np.any(T_eff < 1.25e4):
-        v[T_eff < 1.25e4] = 0.7
-    if np.any(T_eff < 2.1e4):
-        v[T_eff < 2.1e4] = 1.3
-    return v
+    T_eff = np.asarray(T_eff)
+    return np.where(T_eff < 1.25e4, 0.7, np.where(T_eff < 2.1e4, 1.3, 2.6))
 
 
 def vwind(mass, lum=None, radius=None):
@@ -191,11 +184,14 @@ def mdot_vms(mass, lum=None, radius=None, Z=1.0):
 
 
 def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
-    """Main-sequence wind mass-loss rate used in the STARFORGE model.
+    """Main-sequence wind mass-loss rate used in the STARFORGE model (SINGLE_STAR_FB_WINDS == 2).
 
-    Combines a weak-wind prescription (scales as L^2.9) with an O-star
-    prescription (scales as L^1.5), taking the minimum, then applies the VMS
-    rate from `mdot_vms` as a floor when `vms=True`.
+    Implements the "de Jager / 3" prescription from Smith (2014) with a
+    weak-wind limiter (stellar_evolution.cc:1015,1017). Metallicity scaling
+    (Z^0.69) applies only to the de Jager term, not the weak-wind limiter.
+    The VMS floor from `mdot_vms` (Sabhahit arXiv:2205.09125 Eq. 13) is
+    applied by default (SINGLE_STAR_FB_WINDS & 2); set `vms=False` to match
+    SINGLE_STAR_FB_WINDS == 0.
 
     Parameters
     ----------
@@ -206,7 +202,8 @@ def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
     Z_solar : float, optional
         Metallicity in solar units. Default is 1.0.
     vms : bool, optional
-        If True, apply the VMS mass-loss floor. Default is True.
+        If True, apply the VMS mass-loss floor from `mdot_vms`. Default is
+        True (matches Gizmo's SINGLE_STAR_FB_WINDS == 2).
 
     Returns
     -------
@@ -215,15 +212,13 @@ def wind_mdot(mass=None, lum=None, Z_solar=1.0, vms=True):
     """
     if lum is None:
         lum = luminosity_MS(mass)
-    mdot_hi = 10**-22.2 * lum**2.9  # weak wind
-    mdot_lower = 10**-15.0 * lum**1.5  # O stars
-
-    radius = radius_MS(mass)
-
-    mdot = np.min([mdot_hi, mdot_lower], axis=0) * Z_solar**0.7
+    mdot_dejager = 10**-15.0 * lum**1.5 * Z_solar**0.69  # de Jager/"3", Smith 2014
+    mdot_weak = 10**-22.15 * lum**2.9  # weak-wind limiter
+    mdot = np.minimum(mdot_dejager, mdot_weak)
     if vms:
+        radius = radius_MS(mass)
         mdot_hi_2 = mdot_vms(mass, lum, radius, Z_solar)
-        mdot = np.max([mdot, mdot_hi_2], axis=0)
+        mdot = np.maximum(mdot, mdot_hi_2)
     return mdot
 
 

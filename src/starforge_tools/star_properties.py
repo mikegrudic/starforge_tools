@@ -297,7 +297,8 @@ def Q_ionizing(mass=None, lum=None, radius=None, energy_eV=13.6):
         lum = np.clip(_strip(luminosity_MS(mass), u.L_sun), 1e-10, None)
         radius = _strip(radius_MS(mass), u.R_sun)
     energy = _strip(energy_eV, u.eV)
-    T_K = np.clip(_strip(effective_temperature(None, lum, radius), u.K), 1e-10, None)
+    # nan_to_num: clip alone passes NaN through (e.g. L=0 and R=0 give T=0/0)
+    T_K = np.clip(np.nan_to_num(_strip(effective_temperature(None, lum, radius), u.K)), 1e-10, None)
     k_B = 8.617e-5  # eV/K
     x1 = energy / (k_B * T_K)
     Lsun_cgs = 2.389e45
@@ -327,7 +328,7 @@ def Q_ionizing_approx(mass, energy_eV=13.6):
     mass = _strip(mass, u.M_sun)
     L = _strip(luminosity_MS(mass), u.L_sun)
     R = _strip(radius_MS(mass), u.R_sun)
-    T_K = _strip(effective_temperature(None, L, R), u.K)
+    T_K = np.clip(np.nan_to_num(_strip(effective_temperature(None, L, R), u.K)), 1e-10, None)
     energy = _strip(energy_eV, u.eV)
     k_B = 8.617e-5
     x1 = energy / (k_B * T_K)
@@ -351,7 +352,9 @@ def ionizing_frac_approx(x1):
     ndarray
         Fraction of total luminosity above the threshold.
     """
-    result = np.empty_like(x1)
+    # full_like(nan) not empty_like: a NaN x1 matches neither branch mask below,
+    # which would leave uninitialized memory in the result
+    result = np.full_like(np.asarray(x1, dtype=np.float64), np.nan)
     result[x1 < 2.710528524106676] = (
         1
         - ((131.4045728599595 * x1 * x1 * x1) / (2560.0 + x1 * (960.0 + x1 * (232.0 + 39.0 * x1))))[
@@ -380,7 +383,7 @@ def lum_ionizing(mass):
     mass = _strip(mass, u.M_sun)
     L = _strip(luminosity_MS(mass), u.L_sun)
     R = _strip(radius_MS(mass), u.R_sun)
-    T_K = _strip(effective_temperature(None, L, R), u.K)
+    T_K = np.clip(np.nan_to_num(_strip(effective_temperature(None, L, R), u.K)), 1e-10, None)
     k_B = 8.617e-5
     x1 = 13.6 / (k_B * T_K)
     return planck_integral(x1, np.inf, 3) * L * u.L_sun
@@ -406,7 +409,7 @@ def lum_band(mass, E1, E2=np.inf):
     mass = _strip(mass, u.M_sun)
     L = _strip(luminosity_MS(mass), u.L_sun)
     R = _strip(radius_MS(mass), u.R_sun)
-    T_K = _strip(effective_temperature(None, L, R), u.K)
+    T_K = np.clip(np.nan_to_num(_strip(effective_temperature(None, L, R), u.K)), 1e-10, None)
     k_B = 8.617e-5
     x1 = _strip(E1, u.eV) / (k_B * T_K)
     x2 = _strip(E2, u.eV) / (k_B * T_K)

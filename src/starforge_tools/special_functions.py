@@ -240,6 +240,9 @@ def planck_wavelength_integral(min_wavelength_um, max_wavelength_um, temp_K):
     const = (h * c / (k_B * u.K * u.um)).cgs.value
     min_wavelength_um = np.array(min_wavelength_um)
     max_wavelength_um = np.array(max_wavelength_um)
-    x_max = np.float64(const / (min_wavelength_um * temp_K))
-    x_min = np.float64(const / (max_wavelength_um * temp_K))
-    return planck_integral(x_min, x_max, 3)
+    temp_K = np.float64(temp_K)
+    # T=0 emits nothing; guard the x = hc/(lambda k T) conversion against 0-division
+    safe_temp = np.where(temp_K > 0, temp_K, 1.0)
+    x_max = np.float64(const / (min_wavelength_um * safe_temp))
+    x_min = np.float64(const / (max_wavelength_um * safe_temp))
+    return np.where(temp_K > 0, planck_integral(x_min, x_max, 3), 0.0)

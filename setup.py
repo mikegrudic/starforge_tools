@@ -28,6 +28,11 @@ setup(
     ],
     package_dir={"": "src"},
     packages=setuptools.find_packages(where="src"),
+    entry_points={
+        "console_scripts": [
+            "plot_sf=starforge_tools.plot_sf:main",
+        ],
+    },
     python_requires=">=3.9",
     zip_safe=False,
     install_requires=install_requires,

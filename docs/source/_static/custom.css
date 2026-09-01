@@ -1,0 +1,53 @@
+/* Old-timey terminal look: green phosphor text + monospace stack. */
+body {
+    --font-stack: "Menlo", "Consolas", "Liberation Mono", "Courier New", monospace;
+    --color-foreground-primary: #157a15;
+    --color-foreground-secondary: #1e8f1e;
+    --color-foreground-muted: #3f9f3f;
+    --color-brand-primary: #0a8f0a;
+    --color-brand-content: #0a8f0a;
+    --color-brand-visited: #2aa32a;
+}
+
+body[data-theme="dark"],
+:root body[data-theme="dark"] {
+    --color-foreground-primary: #33ff33;
+    --color-foreground-secondary: #28d728;
+    --color-foreground-muted: #1fb51f;
+    --color-brand-primary: #7dff7d;
+    --color-brand-content: #7dff7d;
+    --color-brand-visited: #4ad74a;
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+        --color-foreground-primary: #33ff33;
+        --color-foreground-secondary: #28d728;
+        --color-foreground-muted: #1fb51f;
+        --color-brand-primary: #7dff7d;
+        --color-brand-content: #7dff7d;
+        --color-brand-visited: #4ad74a;
+    }
+}
+
+/* Anvil of Creation as a muted full-page background. Opacity is faked with a
+   near-opaque gradient overlay, matched to furo's light/dark page colors. */
+body {
+    background-image: linear-gradient(rgba(255, 255, 255, 0.85), rgba(255, 255, 255, 0.85)),
+        url("anvil_of_creation.png");
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+body[data-theme="dark"] {
+    background-image: linear-gradient(rgba(19, 20, 22, 0.85), rgba(19, 20, 22, 0.85)),
+        url("anvil_of_creation.png");
+}
+
+@media (prefers-color-scheme: dark) {
+    body:not([data-theme="light"]) {
+        background-image: linear-gradient(rgba(19, 20, 22, 0.85), rgba(19, 20, 22, 0.85)),
+            url("anvil_of_creation.png");
+    }
+}

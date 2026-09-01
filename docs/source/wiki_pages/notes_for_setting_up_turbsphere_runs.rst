@@ -1,8 +1,9 @@
-Example on frontera: /scratch3/03532/mgrudic/STARFORGE_RT/turbsphere/M2e4_R10_S0_T1_B0.01_Res271_n2_sol0.5_42/ DG: Clean (not live run) example on Stampede2: /work2/05917/tg852163/stampede2/stampede2/GMC_sim/Runs/Physics_ladder/M2e4_turbsphere_example
+Setting up TURBSPHERE runs
+--------------------------
 
-the initialization run is in output_stirring, its params file is params.txt, and the SF runs (with and without continued driving) are in output_SF\_\*
+A TURBSPHERE setup is run in two stages: an initialization run that stirs the cloud to statistical equilibrium, followed by the star formation (SF) run.
 
-The stirring run GIZMO binary was compiled with flags:
+The stirring run GIZMO binary is compiled with flags:
 
 ::
 

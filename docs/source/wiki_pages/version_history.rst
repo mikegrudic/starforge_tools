@@ -188,5 +188,3 @@ Other
 ``z_background`` / ``Redshift_RT_Background`` parameterfile entry
    Runtime control of the redshift used to compute the background UV/IR in
    ``RT_ISRF_BACKGROUND``.
-
-----

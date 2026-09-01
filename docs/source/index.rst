@@ -38,13 +38,6 @@ STARFORGE Documentation
    wiki_pages/notes_for_setting_up_turbsphere_runs
 
 
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Other Workflows:
-
-   wiki_pages/hpc_linux_tips_tricks
-
 .. toctree::
    :maxdepth: 2
    :caption: Python package

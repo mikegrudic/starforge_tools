@@ -2,7 +2,7 @@
 the formation rate also split between jet material (jet mass fraction >= 0.5) and the rest, each with and without
 the clumping factor.
 
-Usage: python dump_maps.py [simulation output directory]"""
+Usage: python make_h2_maps.py [simulation output directory]"""
 
 from sys import argv
 from glob import glob

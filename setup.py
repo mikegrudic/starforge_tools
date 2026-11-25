@@ -31,6 +31,8 @@ setup(
     entry_points={
         "console_scripts": [
             "plot_sf=starforge_tools.plot_sf:main",
+            "plot_imf=starforge_tools.plot_imf:main",
+            "plot_phase=starforge_tools.plot_phase:main",
         ],
     },
     python_requires=">=3.9",

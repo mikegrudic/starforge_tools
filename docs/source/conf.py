@@ -53,3 +53,11 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+html_js_files = ["sortable_tables.js"]
+html_css_files = ["sortable_tables.css"]
+
+# simulations.rst is generated from simulations.csv
+sys.path.insert(0, os.path.abspath("."))
+import simulations_table  # noqa: E402
+
+simulations_table.build()

@@ -9,6 +9,7 @@ STARFORGE Documentation
    :caption: Getting the data
 
    getdata
+   simulations
 
 
 .. toctree::

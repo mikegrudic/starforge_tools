@@ -6,7 +6,7 @@ Here we provide some example ``Config.sh`` files for different types of STARFORG
 Notes on OPENMP and MULTIPLEDOMAINS flags
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Note that all setups may optionally include the ``OPENMP`` and ``MULTIPLEDOMAINS`` flags for performance tuning - you will need to experiment to determine the optimal settings for your setup and machine - see the `GIZMO documentation <http://www.tapir.caltech.edu/~phopkins/Site/GIZMO_files/gizmo_documentation.html>`__ for details on what these do. For medium sized (~2e7 gas cells) runs on Frontera or Stampede-2, ``OPENMP=2`` and leaving out ``MULTIPLEDOMAINS`` (which defaults to 8) work well as a starting point.
+Note that all setups may optionally include the ``OPENMP`` and ``MULTIPLEDOMAINS`` flags for performance tuning - you will need to experiment to determine the optimal settings for your setup and machine - see the `GIZMO documentation <http://www.tapir.caltech.edu/~phopkins/Site/GIZMO_files/gizmo_documentation.html>`__ for details on what these do. For medium sized (~2e7 gas cells) runs on TACC systems (e.g. Frontera), ``OPENMP=2`` and leaving out ``MULTIPLEDOMAINS`` (which defaults to 8) work well as a starting point.
 
 “Standard” STARFORGE “Full Physics” Setup
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

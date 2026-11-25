@@ -1,5 +1,5 @@
 ipython
-sphinx_rtd_theme
+furo
 numba
 numpy
 scipy

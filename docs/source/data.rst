@@ -138,6 +138,7 @@ Data Fields
    4. Shell D burning
    5. Main Sequence
    6. Remnant
+
 ``PartType5/ProtoStellarRadius_inSolar``: Radius of the star in Solar radii
 
 ``PartType5/SinkInitialMass``: Mass of the gas cell when it turned into a sink particle.
